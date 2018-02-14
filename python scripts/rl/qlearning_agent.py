@@ -8,6 +8,9 @@
 
 import numpy as np
 from collections import defaultdict
+from keras.models import Sequential
+from keras.layers.core import Dense, Dropout, Activation
+from keras.optimizers import RMSprop
 
 class rl_agent:
     
@@ -28,6 +31,7 @@ class rl_agent:
         self.gamma = gamma
         self.alpha = alpha
         self.epsilon = epsilon
+
     
     def init_q_table(self):
         '''
@@ -53,10 +57,58 @@ class rl_agent:
                 print(num) # returns 10
 
         '''
-
         self.q_table = defaultdict(lambda: [0.0,0.0,0.0,0.0])
 
-   
+    def init_NN(sef,num_outputs, size):
+        
+        model = Sequential()
+
+        model.add(Dense(164, input_shape=(size,)))
+        model.add(Activation('relu'))
+
+        model.add(Dense(150))
+        model.add(Activation('relu'))
+
+        model.add(Dense(4))
+        model.add(Activation('linear')) #linear output so we can have range of real-valued outputs
+
+        rms = RMSprop()
+        model.compile(loss='mse', optimizer=rms)
+        return model
+
+        
+
+    def get_NN_action(self, model,state):
+        '''
+        picks an action with the highest q value generated from a neural network
+        or picks random action
+
+        ARGS:
+            model: keras model to fit
+            state: state as form (state, 1)
+  
+        RETURNS:   
+            self.epsilon % of the time - One of the actions defined in self.actions with the highest Q value 
+            1-self.epsilon % of the time - a random action
+        '''
+        qvals = model.predict(state, batch_size= 1)
+        if np.random.rand() < self.epsilon:
+            return np.argmax(qvals), qvals
+        else:
+            return np.random.choice(self.actions), qvals
+
+    def update_NN(self, s, a, r, s_, qvals, model):
+        newQ = model.predict(s_, batch_size=1)
+        maxQ = np.max(newQ)
+        
+        y = np.zeros((1,len(self.actions)))
+ 
+        y[:] = qvals[:]
+        
+        update = (r + (self.gamma * maxQ))
+        y[0][a] = update
+        model.fit(s, y, batch_size=1, epochs=1, verbose=0)
+        
     def get_q_table(self):
         return self.q_table
 

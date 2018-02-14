@@ -35,9 +35,20 @@ UPDATE_FREQ = 120#HZ
 #RL constants
 EPSILON = 0.9   # greedy police
 ALPHA = 0.5     # learning rate
-GAMMA = 1       # discount factor
+GAMMA = 1      # discount factor
+
+def getState( black_hole_x, black_hole_y, ball_x, ball_y, goal_x, goal_y, neg_x, neg_y):
+    state = np.zeros((GRID_NUM,GRID_NUM))
+
+    state[black_hole_x][black_hole_y] = 2
+    state[ball_x][ball_y] = 1
+    state[goal_x][goal_y] = 4
+    state[neg_x][neg_y] = 3
+
+    return state
 
 def drawScene(black_hole_x, black_hole_y, ball_x, ball_y, goal_x, goal_y, neg_x, neg_y):
+    
     '''
     handles the drawing of the ball, black box, goal box, and negative box
     '''
@@ -120,7 +131,7 @@ while True:
         break
 
 
-
+num_actions = list(range(4))
 agent = rl_agent(
                 list(range(4)), #UP,DOWN,LEFT,RIGHT
                 GAMMA, #gamma
@@ -128,20 +139,26 @@ agent = rl_agent(
                 EPSILON
                 )
 
-agent.init_q_table()
+#agent.init_q_table()
+model = agent.init_NN(
+                        num_outputs = num_actions,
+                        size = GRID_NUM*GRID_NUM
+                    )
 
 #drawScene(black_hole_loc_x, black_hole_loc_y,ball_x,ball_y,goal_x,goal_y, neg_x,neg_y)
+#initalize state matrix
+state = getState(black_hole_loc_x, black_hole_loc_y,ball_x,ball_y,goal_x,goal_y, neg_x,neg_y)
 
 start = time.time()
 total_time = time.time()
 episodes = 0
 steps = 0
 reset  = False
-num_iters = 1000
+epochs = 1000
 all_steps = []
 iters = []
 
-while episodes <= num_iters:
+while episodes <= epochs:
     
     end = time.time()
     elapsed = end - start
@@ -149,11 +166,8 @@ while episodes <= num_iters:
     if elapsed > 1/UPDATE_FREQ: #how fast the ball should move
         start = time.time()
 
-        #get current state
-        state = [ball_x, ball_y]
-
         #get action
-        action = agent.get_action(str(state))
+        action, q_vals = agent.get_NN_action(model,state.reshape((1,GRID_NUM*GRID_NUM)) )
 
         #check if enviornment will allow the new state
         is_valid = check_valid_move(ball_x, ball_y, action)
@@ -179,15 +193,16 @@ while episodes <= num_iters:
             reward = -1
         
         #get next state
-        state_prime = [ball_x, ball_y]
+        state_prime = getState(black_hole_loc_x, black_hole_loc_y,ball_x,ball_y,goal_x,goal_y, neg_x,neg_y)
 
         #update based on experience {s,a,r,s'}
-        agent.update(str(state),action,reward,str(state_prime))
+        agent.update_NN(state.reshape((1,GRID_NUM*GRID_NUM)),action,reward,state_prime.reshape((1,GRID_NUM*GRID_NUM)),  q_vals, model)
 
+      
 
         #if ball is in goal reset back to 0,0
         if reset:
-            print('itr: ' + str(episodes) + ' steps: ' + str(steps) + ' state: ' + str(state) +' reward: ' + str(reward))
+            print('itr: ' + str(episodes) + ' steps: ' + str(steps) + ' reward: ' + str(reward))
             ball_x = 0
             ball_y = 0
             episodes = episodes + 1
@@ -195,17 +210,19 @@ while episodes <= num_iters:
             all_steps.append(steps)
             iters.append(episodes)
             steps = 0
+            
+
+        state = state_prime
 
         #agent.print_q_table()
 
 
     #drawScene(black_hole_loc_x, black_hole_loc_y,ball_x,ball_y,goal_x,goal_y, neg_x,neg_y)
     #stddraw.show(1)
-
-pyplot.plot(iters,all_steps )
 total_end = time.time()
 total_elapsed = total_end - total_time
-pyplot.title('Tabular - ' + 'time: ' + str(round(total_elapsed, 2)) + 's GRID_NUM: ' + str(GRID_NUM) + ' \nEPOCHS: ' + str(num_iters) + ' Avgs Step/Epoch: ' + str(round(np.sum(all_steps) / num_iters ,2)))
-pyplot.savefig('gridworld_' + str(GRID_NUM) + '_' +str(num_iters) )
+pyplot.title('Neural Network - ' + 'time: ' + str(round(total_elapsed,2)) + 's GRID_NUM: ' + str(GRID_NUM) + ' \nEPOCHS: ' + str(epochs) + ' Avgs Step/Epoch: ' + str(round(np.sum(all_steps) / epochs ,2)))
+pyplot.plot(iters,all_steps )
+pyplot.savefig('gridworld_NN_' + str(GRID_NUM) + '_' +str(epochs) )
 #pyplot.show()
 
