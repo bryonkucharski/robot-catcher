@@ -12,6 +12,9 @@ from matplotlib import pyplot
 from random import randint
 import os
 
+import os
+os.environ['SDL_VIDEO_WINDOW_POS'] = str(0) + "," + str(0)
+
 
 #this is just to import stddraw from a different folder
 princeton_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../princeton_lib")))
@@ -26,6 +29,13 @@ if rl_subfolder not in sys.path:
     sys.path.insert(0, rl_subfolder)
 
 from qlearning_agent import rl_agent
+
+#this is just to import stddraw from a different folder
+vision_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../vision")))
+if vision_subfolder not in sys.path:
+    sys.path.insert(0, vision_subfolder)
+
+import vision
 
 def drawScene(goalie_pos, ball_x, ball_y):
     
@@ -45,7 +55,7 @@ def drawScene(goalie_pos, ball_x, ball_y):
     
     #Ball
     stddraw.setPenColor(stddraw.GREEN)
-    stddraw.filledCircle(((ball_x *GRID_SIZE) + (GRID_SIZE/2)) ,((ball_y *GRID_SIZE) + (GRID_SIZE/2)), GRID_SIZE/2)
+    stddraw.filledCircle(((ball_x *GRID_SIZE) + (GRID_SIZE/2)) ,(HEIGHT - ((ball_y *GRID_SIZE) + (GRID_SIZE/2))), GRID_SIZE/2)
         
 def check_valid_move(goalie_pos, action):
     if goalie_pos == 0 and action == 1:
@@ -66,7 +76,7 @@ EPSILON =       1    # greedy police
 ALPHA =         0.5     # learning rate
 GAMMA =         1       # discount 
 ITERS =         1000     #iterations
-UPDATE_FREQ =   15     #How often to update environment
+UPDATE_FREQ =   60    #How often to update environment
 
 stddraw.setXscale(0, WIDTH)
 stddraw.setYscale(0, HEIGHT)
@@ -83,7 +93,7 @@ agent.init_q_table()
 
 goalie_pos = 3 #randint(0,GRID_NUM_WIDTH-1)
 ball_x = randint(0, GRID_NUM_WIDTH-1)
-ball_y = GRID_NUM_HEIGHT-1
+ball_y = 0
 
 
 episodes = 0
@@ -104,11 +114,15 @@ while episodes <= ITERS:
     stddraw.show(0)
     
     if elapsed > 1/UPDATE_FREQ: #how fast the enviornment should move
+
+        img = vision.get_screenshot(0,0, WIDTH, HEIGHT)
+        x,y = vision.pixelToCell(img, GRID_SIZE,GRID_SIZE, debug = True)
+        print('x: ' + str(x) + ' y: ' + str(y))
         
         start = time.time()
 
         #get current state
-        state = [goalie_pos, ball_x, ball_y]
+        state = [goalie_pos, x, y]
 
         #get action
         action = agent.get_action(str(state))
@@ -136,8 +150,8 @@ while episodes <= ITERS:
         
         agent.update(str(state),action,reward,str(state_prime))
 
-        ball_y = ball_y - 1
-        if(ball_y < 0):
+        ball_y = ball_y + 1
+        if(ball_y > GRID_NUM_HEIGHT-1):
             reset = True
         steps = steps + 1
 
@@ -147,9 +161,10 @@ while episodes <= ITERS:
         if reset:
             print('itr: ' + str(episodes) +' reward: ' + str(reward))
             ball_x = randint(0, GRID_NUM_WIDTH-1)
-            ball_y = GRID_NUM_HEIGHT-1
+            ball_y = 0
             episodes = episodes + 1
             reset = False
             all_steps.append(steps)
             all_iters.append(episodes)
             steps = 0
+        
