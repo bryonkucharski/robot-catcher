@@ -16,7 +16,7 @@ def discretize_ball_img(filename, debug):
 	img1 = open_img(filename)
 
 	img_dim = img1.shape[1], img1.shape[0]
-	grid_dim = (5, 8)
+	grid_dim = (8, 5)
 	cell_dim = get_cell_dimensions(img_dim, grid_dim)
 
 	circle_center, radius = get_circle(img1)
@@ -27,7 +27,7 @@ def discretize_ball_img(filename, debug):
 		print_all_coordinates(img_dim, grid_dim, cell_dim, circle_center, cell)
 		img2 = build_img2(img1, img_dim, grid_dim, cell_dim, circle_center, radius)
 		img3 = build_img3(img_dim, grid_dim, cell_dim, cell)
-		show_subplots(img1, img2, img3, filename)
+		show_subplots(img1, img2, img3)
 	else:
 		print(circle_center)
 
@@ -71,7 +71,7 @@ def get_circle(img):
 
 
 def pixel_to_cell(circle_center, cell_dim):
-	return int(circle_center[x]/cell_dim[x]), int(circle_center[y]/cell_dim[y])
+	return int(ceil(circle_center[x]/cell_dim[x])), int(ceil(circle_center[y]/cell_dim[y]))
 
 
 def draw_gridlines(img, img_dim, grid_dim, cell_dim):
@@ -98,7 +98,7 @@ def fill_cell(img, cell_dim, cell):
 	cv2.rectangle(img, (cell_dim[x]*(cell[x]-1),cell_dim[y]*(cell[y]-1)), (cell_dim[x]*cell[x],cell_dim[y]*cell[y]), (0,255,0), -1)
 
 
-def show_subplots(img1, img2, img3, filename):
+def show_subplots(img1, img2, img3):
 	plt.subplot(131),plt.imshow(cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)),plt.title('Original')
 	plt.xticks([]), plt.yticks([])
 
@@ -108,7 +108,6 @@ def show_subplots(img1, img2, img3, filename):
 	plt.subplot(133),plt.imshow(cv2.cvtColor(img3, cv2.COLOR_BGR2RGB)),plt.title('Discretized')
 	plt.xticks([]), plt.yticks([])
 
-	plt.savefig('processed_imgs/' + filename)
 	plt.show()
 
 
@@ -135,7 +134,7 @@ def build_img3(img_dim, grid_dim, cell_dim, cell):
 
 
 def open_img(filename):
-	img = cv2.imread('raw_imgs/' + filename)
+	img = cv2.imread(filename)
 
 	# Poor doccumentation on how to error check for failed read
 	# if (img1.empty()):
