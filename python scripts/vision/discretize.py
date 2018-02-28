@@ -1,3 +1,5 @@
+# Usage python discretize.py <filename> <debug flag>
+
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
