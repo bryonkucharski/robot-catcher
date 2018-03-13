@@ -108,7 +108,7 @@ def show_subplots(img1, img2, img3, filename):
 	plt.subplot(133),plt.imshow(cv2.cvtColor(img3, cv2.COLOR_BGR2RGB)),plt.title('Discretized')
 	plt.xticks([]), plt.yticks([])
 
-	plt.savefig('processed_imgs/' + filename)
+	plt.savefig(filename[2:])
 	plt.show()
 
 
@@ -135,7 +135,7 @@ def build_img3(img_dim, grid_dim, cell_dim, cell):
 
 
 def open_img(filename):
-	img = cv2.imread('raw_imgs/' + filename)
+	img = cv2.imread(filename)
 
 	# Poor doccumentation on how to error check for failed read
 	# if (img1.empty()):
