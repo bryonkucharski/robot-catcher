@@ -147,7 +147,7 @@ def open_img(filename):
 
 def main():
 	if (len(sys.argv) != 3):
-		print("\nUsage: pythonw draw.py <filename> <debug mode>")
+		print("\nUsage: pythonw " + sys.argv[0] + " <filename> <debug mode>")
 		sys.exit()
 
 	filename, debug = sys.argv[1], int(sys.argv[2])
