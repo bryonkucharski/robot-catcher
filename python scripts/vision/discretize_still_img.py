@@ -146,7 +146,7 @@ def open_img(filename):
 
 def main():
 	if (len(sys.argv) != 3):
-		print("\nUsage: pythonw draw.py <filename> <debug mode>")
+		print("\nUsage: pythonw discretize_still_img.py <filename> <debug mode>")
 		sys.exit()
 
 	filename, debug = sys.argv[1], int(sys.argv[2])
