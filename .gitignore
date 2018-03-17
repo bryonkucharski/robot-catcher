@@ -1,0 +1,3 @@
+*.png
+python scripts/gridworld/__pycache__/rl_agent.cpython-36.pyc
+*.pyc
