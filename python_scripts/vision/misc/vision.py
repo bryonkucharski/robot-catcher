@@ -67,4 +67,4 @@ def pixelToCell(colorImage, cell_LengthX, cell_LengthY, debug=False):
 		    cv2.waitKey(1)
 		    #cv2.destroyAllWindows()
 
-    return cellX, cellY
+    return int(cellX), int(cellY)

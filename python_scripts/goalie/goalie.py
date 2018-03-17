@@ -117,13 +117,13 @@ while episodes <= ITERS:
 
         img = vision.get_screenshot(0,0, WIDTH, HEIGHT)
         x,y = vision.pixelToCell(img, GRID_SIZE,GRID_SIZE, debug = True)
-        print('x: ' + str(x) + ' y: ' + str(y))
         
         start = time.time()
 
         #get current state
         state = [goalie_pos, x, y]
-
+        #state = [goalie_pos, ball_x, ball_y]
+        
         #get action
         action = agent.get_action(str(state))
 
@@ -139,12 +139,17 @@ while episodes <= ITERS:
                 goalie_pos = goalie_pos + 1
             
         #reward decision  -.04 every action, 1 for making it into the goal
-        reward = -.04
-        if(ball_x == goalie_pos):
+        #reward = -.04
+        if (ball_x == goalie_pos):
             reward = 1
+        else:
+           reward = -0.1 * (abs(goalie_pos - ball_x))
         
         #get next state
-        state_prime = [goalie_pos, ball_x, ball_y]
+        img = vision.get_screenshot(0,0, WIDTH, HEIGHT)
+        x_,y_ = vision.pixelToCell(img, GRID_SIZE,GRID_SIZE, debug = False)
+        state_prime = [goalie_pos, x_, y_]
+        
 
         #update based on experience {s,a,r,s'}
         
