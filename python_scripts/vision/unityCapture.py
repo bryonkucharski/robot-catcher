@@ -32,7 +32,7 @@ while (True):
 		# Capture frame
 		#ret, img1 = cap.read()
 		tack = 25;#Expand the screen capture area incase the ball spawns on the edge of the ramp
-		screenImage = ImageGrab.grab(bbox=(309-tack, 193, 573+tack, 618))#(X, Y) starting position ; (W, H) ending position
+		screenImage = ImageGrab.grab(bbox=(305, 157, 580, 597))#(X, Y) starting position ; (W, H) ending position
 		
 		img1 = np.array(screenImage)#convert the image to a numpy array
 		
@@ -41,8 +41,8 @@ while (True):
 
 		if (first_frame):
 			img_dim = img1.shape[1], img1.shape[0]
+			print(img1.shape)
 			cell_dim = v.get_cell_dimensions(img_dim, grid_dim)
-			print(img_dim)
 			first_frame = False
 
 		circle_center, radius = v.get_circle(img1)

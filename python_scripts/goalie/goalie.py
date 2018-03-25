@@ -10,9 +10,7 @@ import os, sys, inspect
 import time
 from matplotlib import pyplot
 from random import randint
-import os
 
-import os
 os.environ['SDL_VIDEO_WINDOW_POS'] = str(0) + "," + str(0)
 
 

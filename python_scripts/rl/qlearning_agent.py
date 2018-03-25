@@ -57,7 +57,10 @@ class rl_agent:
                 print(num) # returns 10
 
         '''
-        self.q_table = defaultdict(lambda: [0.0,0.0,0.0,0.0])
+        #self.q_table = defaultdict(lambda: [0.0,0.0,0.0,0.0])
+
+
+        self.q_table = defaultdict(lambda: [0.0 for x in range(len(self.actions)) ])
 
     def init_NN(sef,num_outputs, size):
         
