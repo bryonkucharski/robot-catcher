@@ -30,10 +30,24 @@ ALPHA =         0.5     # learning rate
 GAMMA =         1       # discount 
 
 
-def wait_to_start():
-    while(server.getData() != 'start'):
-        print("waiting to start")
-    print('Unity is Ready')
+def wait_for_phrase(phrase):
+    """
+        Blocking call - reads socket until the data is the same as phrase "start", "stop", "test", etc.
+    """
+    while(server.getData() != phrase):
+        print("waiting for" + phrase )
+
+def wait_for_number(num):
+    """
+        Blocking call - reads socket until the header is the same as num "0", "1", "2", etc.
+    """
+    header = '-1'
+    while header != num:
+        data = server.getData().split(',')
+        #print(data)
+        header = data[0]
+    return data
+
 
 def get_state_vision(grid_dim):
     
@@ -48,16 +62,13 @@ def get_state_vision(grid_dim):
     if(len(cell) == 0):
         return
     else:
-        return [ robot_x, cell[0] ]
+        return [ robot_x, int(cell[0]) ]
     
 
 def get_robot_pos():
     server.sendData('3')
     header = '-1'
-    while header != '3':
-        data = server.getData().split(',')
-        #print(data)
-        header = data[0]
+    data = wait_for_number('3')
 
     #ball_y = float(data[3])
     robot_x = int(data[1])
@@ -74,30 +85,23 @@ def get_state_unity():
     '''
     server.sendData('0')
     header = '-1'
-    while header != '0':
-        data = server.getData().split(',')
-        #print(data)
-        header = data[0]
+    data = wait_for_number('0')
 
-    #print('Getting State From Unity')
     ball_x = float(data[2])
-    #ball_y = float(data[3])
     robot = int(data[1])
     return [robot, ball_x]
-    #return [robot,ball_x,ball_y]
+
 
 def send_action(a):
-    server.sendData('1,' + str(a));
+    server.sendData('1,' + str(a))
+    wait_for_number('1')
 
 def get_reward():
-    header = '-1'
-    while header != '2':
-        #print('Getting Reward From Unity')
-        data = server.getData().split(',')
-        header = data[0]
-        reward = float(data[1])
-        #print(reward)
-        return reward
+    server.sendData('2')
+    data = wait_for_number('2')
+    reward = float(data[1])
+    #print(reward)
+    return reward
 
 #def calculateReward():
     
@@ -118,7 +122,7 @@ server = tcp_socket(
 
 agent.init_q_table()
 
-#wait_to_start()
+
 i = 0
 epochs = 10000
 update_rate = 1/5
@@ -130,7 +134,7 @@ start = time.time()
 test = time.time()
 
 
-
+wait_for_phrase("start")
 
 while(i < epochs):
 
@@ -145,8 +149,9 @@ while(i < epochs):
 
     #get action
     action = agent.get_action(str(state))
+    
     send_action(action)
-
+    
     reward = get_reward()
 
     state_prime = get_state_vision(grid_dim)
