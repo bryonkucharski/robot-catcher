@@ -166,7 +166,8 @@ class rl_agent:
         '''
         prints all values currently in the q table
         '''
-        for item in self.q_table.items():
+
+        for item in sorted(self.q_table.items()):
             print(str(item))
 
     ''' 
