@@ -25,7 +25,8 @@ double mm;
 int incomingByte = 0;
 #define mmPerRevolution 40
 #define stepsPerRevolution 206
-#define stepperMovement 334.75
+#define stepperMovement 334
+int counter;
 
 
 //left 75 
@@ -39,6 +40,7 @@ void setup()
    time = 0;
    seconds = 0;
    mmToSteps = 0;
+   counter = 0;
    /* math isnt needed right now
    mm = movement;
    mmToRevolutions = mm / mmPerRevolution;
@@ -55,22 +57,30 @@ void setup()
 
 void loop()
 {  
-  if(Serial.available() > 0){
+  if(Serial.available()){
     incomingByte = Serial.read();
 
-    Serial.Print("I received: ");
-    Serial.Println(incomingByte, DEC);
-
-    if(incomingByte == 75){
-      stepper.moveTo(-stepperMovement);
+    //Serial.print("I received: ");
+    //Serial.println(incomingByte, DEC);
+    if(counter == 0){
+      if(incomingByte == 30){
+       stepper.moveTo(-stepperMovement);
+      }
+      else if(incomingByte == 32){
+       stepper.moveTo(stepperMovement);
+      }
+      else
+      {
+        incomingByte = 0;
+      }
     }
-    else if(incomingByte == 77){
-      stepper.moveTo(stepperMovement);
-    }
+   }
 
     
     if(stepper.distanceToGo() == 0){
       stepper.move(0);
+      stepper.setCurrentPosition(0);
+      stepper.setMaxSpeed(2000);
       /*
       time = millis();
       seconds = time / 1000.0;
@@ -78,18 +88,32 @@ void loop()
       Serial.print("\n");
       */
       //resets the incoming bit variable
-      incomingByte = 0;
+      //incomingByte = 0;
+      counter = 0;
     }
 
     if(digitalRead(A0) == 0)
     {
       stepper.move(0);
-      //sets the stepper motor away from the limit switch
+      stepper.setCurrentPosition(0);
+      stepper.setMaxSpeed(2000);
       stepper.moveTo(-10);
-     }
-  
+      
+      while(true)
+      {
+        stepper.run();
+        if(stepper.distanceToGo() == 0)
+        {
+          stepper.setCurrentPosition(0);
+          stepper.setMaxSpeed(2000);
+          break;
+        }
+      }
+      
+    }
+    
     stepper.run();
+    
   
-  }
 }
 
