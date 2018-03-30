@@ -32,9 +32,9 @@ int incomingByte = 0;
 #define stepsPerRevolution 206
 #define stepperMovement 334
 int counter;
+int gridStepPosition = 0;
+int gridPosition;
 
-
-//left 75 
 //right 77
 //334.75 == steps needed for 65 mm
 
@@ -46,6 +46,7 @@ void setup()
    seconds = 0;
    mmToSteps = 0;
    counter = 0;
+   gridPosition = 0;
    /* math isnt needed right now
    mm = movement;
    mmToRevolutions = mm / mmPerRevolution;
@@ -67,34 +68,34 @@ void loop()
 
     //Serial.print("I received: ");
     //Serial.println(incomingByte, DEC);
-    if(counter == 0){
+    
       if(incomingByte == 30){
-       stepper.moveTo(-stepperMovement);
+        //Dont let go past 5 grid spaces
+        
+        if(stepper.currentPosition() >= -1336){
+          gridStepPosition = gridStepPosition - stepperMovement;
+          stepper.moveTo(gridStepPosition);
+        }
       }
       else if(incomingByte == 32){
-       stepper.moveTo(stepperMovement);
+       gridStepPosition = gridStepPosition + stepperMovement;
+       stepper.moveTo(gridStepPosition);
       }
       else
       {
         incomingByte = 0;
       }
-    }
    }
 
     
     if(stepper.distanceToGo() == 0){
       stepper.move(0);
-      stepper.setCurrentPosition(0);
-      stepper.setMaxSpeed(2000);
       /*
       time = millis();
       seconds = time / 1000.0;
       Serial.print(seconds);
       Serial.print("\n");
       */
-      //resets the incoming bit variable
-      //incomingByte = 0;
-      counter = 0;
     }
 
     if(digitalRead(A0) == 0)
@@ -111,6 +112,7 @@ void loop()
         {
           stepper.setCurrentPosition(0);
           stepper.setMaxSpeed(2000);
+          gridStepPosition = 0;
           break;
         }
       }
