@@ -12,9 +12,14 @@
 AccelStepper stepper(1,9,8); // Defaults to AccelStepper::FULL4WIRE (4 pins) on 2, 3, 4, 5
 
 //pin 1 for default
-//pin 9 for DIR -
-//pin 8 for PUL-
+
+//WIRING
+//pin 8 for DIR -
+//pin 9 for PUL-
 //PUL + and DIR + go to 5v on arduino
+//Limit switch red wire to 3.3v power
+//Limit switch black wire to ground
+//Limit switch green wire to pin A0
 
 unsigned long time;
 double seconds;
