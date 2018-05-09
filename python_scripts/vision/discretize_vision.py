@@ -1,10 +1,44 @@
-import cv2
-import numpy as np
 import collections
+
+import numpy as np
+
+import cv2
 
 # Enumerations to ease tuple access 
 x = 0
 y = 1
+
+
+
+def getCell(cap, scale_factor, first_frame ,grid_dim, draw_frame = False):
+    	# Capture frame
+	ret, img1 = cap.read()
+
+	# Resize to ease processing time, save screen space for plotting multiple frames
+	img1 = cv2.resize(img1, (0,0), fx=scale_factor, fy=scale_factor)
+
+	img1 = img1[0:265, 240:351]
+
+	if (first_frame):
+		img_dim = img1.shape[1], img1.shape[0]
+		cell_dim = get_cell_dimensions(img_dim, grid_dim)
+		#print(img_dim)
+		first_frame = False
+
+	circle_center, radius = get_circle(img1)
+	cell = pixel_to_cell(circle_center, cell_dim)
+
+	img2 = build_img2(img1, img_dim, grid_dim, cell_dim, circle_center, radius)
+	img3 = build_img3(img_dim, grid_dim, cell_dim, cell)
+
+	# Change to hstack() for horizontal plotting
+	total = np.vstack((img1, img2, img3))
+
+	if(draw_frame):
+		cv2.imshow('image', total)
+
+	return cell
+
 
 
 def discretize_ball_img(filename, debug, grid_dim):
@@ -40,7 +74,7 @@ def get_circle(img):
 	while (1):
 		#print("While")
 		blur_img = cv2.blur(grey_img, (filter_size,filter_size))
-		circles = cv2.HoughCircles(blur_img, cv2.HOUGH_GRADIENT, 1, 20, param1 = 50, param2 = 30, minRadius = 25, maxRadius = 100)
+		circles = cv2.HoughCircles(blur_img, cv2.HOUGH_GRADIENT, 1, 20, param1 = 50, param2 = 30, minRadius = 1, maxRadius = 50)
 
 		# if circles is None:
 		# 	print(filter_size)
@@ -69,7 +103,12 @@ def get_circle(img):
 
 	center = (circles[0,0,0], circles[0,0,1])
 	radius = circles[0,0,2]
-	center, radius = temporal_filter(center, radius)
+	#print(str(num_circles) + ' ' + str(radius) + ' ' + str(center))
+	#center, radius = temporal_filter(center, radius)
+
+	# THIS IS A QUICK FIX...FIND ROOT CAUSE
+	if radius == 0:
+		return (), 0
 
 	return center, radius
 

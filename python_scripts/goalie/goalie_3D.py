@@ -3,6 +3,7 @@ import random
 import time
 from PIL import ImageGrab
 import numpy as np
+import matplotlib.pyplot as plt
 
 #this is just to import rl agent from a different folder
 rl_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../rl")))
@@ -57,12 +58,13 @@ def get_state_vision(grid_dim):
     cell_dim = v.get_cell_dimensions(img_dim, grid_dim)
     circle_center, radius = v.get_circle(img)
     cell = v.pixel_to_cell(circle_center, cell_dim)
+    
     #print(cell)
     robot_x = get_robot_pos()
     if(len(cell) == 0):
-        return
+        return ([-1000,-1000], -1000)
     else:
-        return [ robot_x, int(cell[0]) ]
+        return ([ robot_x, int(cell[0]) ], int(cell[1]))
     
 
 def get_robot_pos():
@@ -121,10 +123,10 @@ server = tcp_socket(
                     )
 
 agent.init_q_table()
-
+agent.init_stddraw(500)
 
 i = 0
-epochs = 10000
+epochs = 1000
 update_rate = 1/5
 grid_dim = (5,10)
 
@@ -136,6 +138,13 @@ test = time.time()
 
 wait_for_phrase("start")
 
+iters = 0
+num_catches = 0
+total_reward = 0
+total_rewards = []
+num_epochs = []
+
+
 while(i < epochs):
 
     end = time.time()
@@ -144,7 +153,7 @@ while(i < epochs):
    # if(elapsed > update_rate):
     start = time.time()
 
-    state = get_state_vision(grid_dim)
+    (state, ball_y) = get_state_vision(grid_dim)
     #state = get_state_unity()
 
     #get action
@@ -153,17 +162,35 @@ while(i < epochs):
     send_action(action)
     
     reward = get_reward()
+    total_reward = total_reward + reward
+    
+    #print(str(state[0]) + str(state[1]) + str(ball_y))
+    #if ((state[0] == state[1]) and (ball_y == 8)):
+     #  print("CATCH")
+    #if(state[1] == )
 
-    state_prime = get_state_vision(grid_dim)
+    state_prime, ball_y = get_state_vision(grid_dim)
     #state_prime = get_state_unity()
-
+    
     #print(str(state) + ", " + str(action) + ", " + str(reward) + ", " + str(state_prime))
     agent.update(str(state),action,reward,str(state_prime))
 
     if (i % 10 == 0):
-        os.system('cls')
-        agent.print_q_table()
+        total_rewards.append(total_reward)
+        num_epochs.append(i)
+    #    os.system('cls')
+        #agent.print_q_table()
+    agent.visualize_q_table(500)
 
 
     i = i + 1
+    
+print(total_rewards)
+print(num_epochs)
+plt.plot(num_epochs,total_rewards)
+plt.title("Cumulative Reward in 3D Simulation")
+plt.ylabel("Cumulative Reward")
+plt.xlabel("Number of Updates")
+plt.show()
+agent.print_q_table()
 

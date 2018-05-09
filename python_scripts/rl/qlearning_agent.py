@@ -7,10 +7,20 @@
 '''
 
 import numpy as np
+import math
+import os, sys, inspect
 from collections import defaultdict
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.optimizers import RMSprop
+
+#this is just to import stddraw from a different folder
+princeton_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../princeton_lib")))
+if princeton_subfolder not in sys.path:
+    sys.path.insert(0, princeton_subfolder)
+
+import stddraw
+import color
 
 class rl_agent:
     
@@ -169,6 +179,50 @@ class rl_agent:
 
         for item in sorted(self.q_table.items()):
             print(str(item))
+    
+
+    def init_stddraw(self, width):
+        stddraw.setXscale(0, width)
+        stddraw.setYscale(0, width)
+        stddraw.setCanvasSize(width,width)
+
+    def visualize_q_table(self, width):
+
+        qt = sorted(self.q_table.items())
+        GRID_SIZE_X = width / len(self.actions)
+        GRID_SIZE_Y = width / len(qt)
+
+        for i in range(0,len(self.q_table.items())):
+           
+            for j in range(0,len(self.actions)):
+                #print(str(qt[i][1][j]) + ' ',end='')
+                current_val = (qt[i][1][j]) 
+                sigmoid = 1 / (1 + math.exp(-current_val)) #get a range between 0 and 1
+                state_name = qt[i][0] + " - " + str(round(qt[i][1][j],2))
+                if current_val < 0:
+                    new_color = color.Color(int(sigmoid*255),0,0)
+                elif current_val == 0.0:
+                    new_color = color.Color(0,0,0)
+                else:
+                    new_color = color.Color(0,int(sigmoid*255),0)
+                #stddraw.setPenColor(color.BLACK)
+                #stddraw.text((GRID_SIZE_X * i) + (GRID_SIZE/2),(GRID_SIZE * j) + (GRID_SIZE / 2), state_name)
+               
+                stddraw.setPenColor(new_color)
+                stddraw.filledRectangle( (GRID_SIZE_X*j),width - (GRID_SIZE_Y*i) - GRID_SIZE_Y,GRID_SIZE_X,GRID_SIZE_Y)
+                stddraw.setPenColor(color.WHITE)
+                stddraw.text((GRID_SIZE_X*j) + (GRID_SIZE_X/2),width - (GRID_SIZE_Y*i) - GRID_SIZE_Y + (GRID_SIZE_Y/2), state_name)
+        
+        stddraw.setPenColor(color.BLACK)
+        #gridlines
+        for i in range(1,len(self.q_table.items())):
+            stddraw.filledRectangle(0,GRID_SIZE_Y*i,width,0)
+
+        for i in range(1,len(self.actions)):
+            stddraw.filledRectangle(GRID_SIZE_X * i,0,0,width)
+
+        stddraw.show(0)
+
 
     ''' 
     def save_q_table(self, name):

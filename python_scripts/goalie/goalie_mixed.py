@@ -3,7 +3,7 @@ import random
 import time
 from PIL import ImageGrab
 import numpy as np
-
+import cv2
 
 #this is just to import rl agent from a different folder
 rl_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../rl")))
@@ -24,26 +24,21 @@ if robot_subfolder not in sys.path:
 
 from virtual_robot import virtual_robot
 
+#variables for vision
+cap = cv2.VideoCapture(1)
+scale_factor = 0.6
+first_frame = True
+grid_dim = (5, 5)
 
 
-def get_reward_vision():
-        #if robot position is the same as the ball position 
-            #return 1
-        else:
-            #return math
-    return 10
+def get_reward_vision(robot_pos, ball_pos):
+    if (robot_pos == ball_pos):
+        return 1
+    else:
+        return -0.1 * (abs(robot_pos - ball_pos))
+    
 
-def get_state_vision(grid_dim, robot):
-   
-    # TODO: get screenshot from camera
-    screenImage = v.screenshot()#(X, Y) starting position ; (W, H) ending position
-    img = np.array(screenImage)#convert the image to a numpy array
-    img_dim = img.shape[1], img.shape[0]
-    cell_dim = v.get_cell_dimensions(img_dim, grid_dim)
-    circle_center, radius = v.get_circle(img)
-    cell = v.pixel_to_cell(circle_center, cell_dim)
-    #print(cell)
-    robot_x = robot.get_pos()
+
     
 
 #RL constants
@@ -62,6 +57,7 @@ agent = rl_agent(
 robot = virtual_robot(
                     WIDTH = 1680,
                     HEIGHT = 1050,
+                    
                     dpi = 99,
                     ramp_length = 12.7953, #inches
                     number_of_states = 5
@@ -73,30 +69,47 @@ i = 0
 epochs = 10000
 grid_dim = (5,8)
 
-while(i < epochs):
+while(True):
+#while(i < epochs):
     
-
-    #state = get_state_vision(grid_dim, robot)
+    #get state
+    cell = v.getCell(cap,scale_factor,first_frame,grid_dim, draw_frame=True)
+    robot_pos = robot.get_pos()
+    if(len(cell) < 1):
+        continue
+    state = (cell[0],robot_pos)
 
     #get action
     action = agent.get_action(str(state))
-   
+    
     robot.update_position(action)
     
-    reward = get_reward_vision()
+    #get reward
+    reward = get_reward_vision(robot_pos,cell[0])
 
-    state_prime = get_state_vision(grid_dim, rpbot)
+    #get state prime
+    cell_prime = v.getCell(cap,scale_factor,first_frame,grid_dim)
+    robot_pos_prime = robot.get_pos()
+    if(len(cell_prime) < 1):
+        continue
+    state_prime = (cell_prime[0] , robot_pos_prime)
 
 
-    #print(str(state) + ", " + str(action) + ", " + str(reward) + ", " + str(state_prime))
+    print(str(state) + ", " + str(action) + ", " + str(reward) + ", " + str(state_prime))
+
+    #update q table
     agent.update(str(state),action,reward,str(state_prime))
 
-    if (i % 10 == 0):
-        os.system('cls')
-        agent.print_q_table()
+    #if (i % 10 == 0):
+        #os.system('cls')
+        #agent.print_q_table()
 
 
-    i = i + 1
+   # i = i + 1
 
     robot.drawRobot()
-  
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+cap.release()
+cv2.destroyAllWindows()
