@@ -11,7 +11,7 @@ import time
 from matplotlib import pyplot
 from random import randint
 
-os.environ['SDL_VIDEO_WINDOW_POS'] = str(0) + "," + str(0)
+#os.environ['SDL_VIDEO_WINDOW_POS'] = str(0) + "," + str(0)
 
 
 #this is just to import stddraw from a different folder
@@ -33,7 +33,7 @@ vision_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(i
 if vision_subfolder not in sys.path:
     sys.path.insert(0, vision_subfolder)
 
-import vision
+import discretize_vision
 
 def drawScene(goalie_pos, ball_x, ball_y):
     
@@ -76,9 +76,9 @@ GAMMA =         1       # discount
 ITERS =         1000     #iterations
 UPDATE_FREQ =   60    #How often to update environment
 
-stddraw.setXscale(0, WIDTH)
-stddraw.setYscale(0, HEIGHT)
-stddraw.setCanvasSize(WIDTH,HEIGHT)
+#stddraw.setXscale(0, WIDTH)
+#stddraw.setYscale(0, HEIGHT)
+#stddraw.setCanvasSize(WIDTH,HEIGHT)
 
 agent = rl_agent(
                 list(range(3)), #STAY,LEFT,RIGHT
@@ -88,6 +88,7 @@ agent = rl_agent(
                 )
 
 agent.init_q_table()
+agent.init_stddraw(800)
 
 goalie_pos = 3 #randint(0,GRID_NUM_WIDTH-1)
 ball_x = randint(0, GRID_NUM_WIDTH-1)
@@ -108,18 +109,19 @@ while episodes <= ITERS:
     end = time.time()
     elapsed = end - start
 
-    drawScene(goalie_pos,ball_x, ball_y)
-    stddraw.show(0)
+    #drawScene(goalie_pos,ball_x, ball_y)
+    #stddraw.show(0)
     
     if elapsed > 1/UPDATE_FREQ: #how fast the enviornment should move
 
-        img = vision.get_screenshot(0,0, WIDTH, HEIGHT)
-        x,y = vision.pixelToCell(img, GRID_SIZE,GRID_SIZE, debug = True)
-        
+        #img = vision.get_screenshot(0,0, WIDTH, HEIGHT)
+        #x,y = vision.pixelToCell(img, GRID_SIZE,GRID_SIZE, debug = True)
+        x = ball_x
+        y = ball_y
         start = time.time()
 
         #get current state
-        state = [goalie_pos, x, y]
+        state = [goalie_pos, x]
         #state = [goalie_pos, ball_x, ball_y]
         
         #get action
@@ -144,15 +146,17 @@ while episodes <= ITERS:
            reward = -0.1 * (abs(goalie_pos - ball_x))
         
         #get next state
-        img = vision.get_screenshot(0,0, WIDTH, HEIGHT)
-        x_,y_ = vision.pixelToCell(img, GRID_SIZE,GRID_SIZE, debug = False)
-        state_prime = [goalie_pos, x_, y_]
+        #img = vision.get_screenshot(0,0, WIDTH, HEIGHT)
+        #x_,y_ = vision.pixelToCell(img, GRID_SIZE,GRID_SIZE, debug = False)
+        x_ = ball_x
+        y_ = ball_y
+        state_prime = [goalie_pos, x_]
         
 
         #update based on experience {s,a,r,s'}
         
         agent.update(str(state),action,reward,str(state_prime))
-
+        agent.visualize_q_table(800)
         ball_y = ball_y + 1
         if(ball_y > GRID_NUM_HEIGHT-1):
             reset = True
@@ -160,9 +164,9 @@ while episodes <= ITERS:
 
         #os.system('cls')
         #print(agent.print_q_table())
-
+        print('itr: ' + str(episodes) +' reward: ' + str(reward) + " x: " + str(x) + "  x_: " + str(x_) + " goalie_pos: " + str(goalie_pos))
         if reset:
-            print('itr: ' + str(episodes) +' reward: ' + str(reward))
+           
             ball_x = randint(0, GRID_NUM_WIDTH-1)
             ball_y = 0
             episodes = episodes + 1
