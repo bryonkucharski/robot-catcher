@@ -8,6 +8,9 @@ def continous_keypress(e):
 		msg = keyboard._pressed_events #returns a dict
 		print(list(msg)[0]) #convert key to int
 		serial_port.write(msg)
+		print(serial.read())
+		
 
 keyboard.hook(continous_keypress)
 keyboard.wait()
+

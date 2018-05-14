@@ -33,7 +33,7 @@ int incomingByte = 0;
 #define stepperMovement 334
 int counter;
 int gridStepPosition = 0;
-int gridPosition;
+int gridPosition = 0;
 
 //right 77
 //334.75 == steps needed for 65 mm
@@ -46,7 +46,6 @@ void setup()
    seconds = 0;
    mmToSteps = 0;
    counter = 0;
-   gridPosition = 0;
    /* math isnt needed right now
    mm = movement;
    mmToRevolutions = mm / mmPerRevolution;
@@ -72,13 +71,17 @@ void loop()
       if(incomingByte == 30){
         //Dont let go past 5 grid spaces
         
-        if(stepper.currentPosition() >= -1336){
+        if(stepper.currentPosition() >= -1002){
           gridStepPosition = gridStepPosition - stepperMovement;
           stepper.moveTo(gridStepPosition);
         }
       }
       else if(incomingByte == 32){
        gridStepPosition = gridStepPosition + stepperMovement;
+       stepper.moveTo(gridStepPosition);
+      }
+      else if(incomingByte == 17){
+       gridStepPosition = 10;
        stepper.moveTo(gridStepPosition);
       }
       else
@@ -90,6 +93,8 @@ void loop()
     
     if(stepper.distanceToGo() == 0){
       stepper.move(0);
+      gridPosition = stepper.currentPosition() / 334;
+      Serial.write(gridPosition);
       /*
       time = millis();
       seconds = time / 1000.0;
