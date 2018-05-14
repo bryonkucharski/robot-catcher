@@ -81,7 +81,8 @@ void loop()
        stepper.moveTo(gridStepPosition);
       }
       else if(incomingByte == 17){
-       gridStepPosition = 10;
+       //big value to reset from limit switch
+       gridStepPosition = 1500;
        stepper.moveTo(gridStepPosition);
       }
       else
