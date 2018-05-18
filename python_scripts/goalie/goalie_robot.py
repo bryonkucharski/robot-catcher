@@ -57,6 +57,18 @@ def actionToCommand(action):
         return 32
     elif int(action) == 2:
         return 30
+
+def positionToCommand(new_robot_pos):
+    if new_robot_pos == 0:
+        return 16
+    elif new_robot_pos == 1:
+        return 17
+    elif new_robot_pos == 2:
+        return 18
+    elif new_robot_pos == 3:
+        return 19
+    elif new_robot_pos == 4:
+        return 20
  
 
 def checkValidMove(robot_pos, action):
@@ -100,28 +112,39 @@ epochs = 10000
 grid_dim = (5,8)
 robot_pos = 0
 
-readFromRobot()
 
-'''
+
 while(True):
 #while(i < epochs):
     #print(robot_pos)
     #get state
+    #start = time.time()
+    #this takes about 20 - 30 ms or .02 to .03 s
     cell = v.getCell(cap,scale_factor,first_frame,grid_dim, draw_frame=True)
-    
+    #end = time.time()
+    #elapsed = end - start
+    #print(elapsed*1000.0)
     if(len(cell) < 1):
         continue
     
     state = (cell[0],robot_pos)
+    #print(state)
 
     #get action
     action = agent.get_action(str(state))
-    if action != 0:
-        if(checkValidMove(robot_pos, action)):
-            robot_ready = readFromRobot()
-            command = actionToCommand(action)
-            sendToRobot(command)
-            robot_pos = updateRobotPosition(robot_pos, action)
+
+    #if(checkValidMove(robot_pos, action)):
+        #robot_ready = readFromRobot()
+    #if( cell[1] == 1 ):
+
+    if checkValidMove(robot_pos, action): 
+        robot_pos = updateRobotPosition(robot_pos, action)
+        print(robot_pos)
+        if action != 0:
+            command = positionToCommand(robot_pos)
+            print(command)
+            if command != robot_pos:
+                sendToRobot(command)
 
     #get reward
     reward = get_reward_vision(robot_pos, cell[0])
@@ -143,7 +166,7 @@ while(True):
         #os.system('cls')
         #agent.print_q_table()
 
-
+  
    # i = i + 1
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -151,4 +174,3 @@ while(True):
 
 cap.release()
 cv2.destroyAllWindows()
-'''

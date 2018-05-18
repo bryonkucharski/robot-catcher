@@ -13,7 +13,7 @@ cap = cv2.VideoCapture(1)
 
 scale_factor = 0.6
 first_frame = True
-grid_dim = (5, 5)
+grid_dim = (5, 8)
 
 # Enumerations to ease tuple access 
 x = 0
