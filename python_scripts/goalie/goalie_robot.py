@@ -5,10 +5,10 @@ from PIL import ImageGrab
 import numpy as np
 import cv2
 import serial # (pip install pySerial)
+import struct
 
 # Replace with specific port name & baud rate
-serial_port = serial.Serial('COM4', 9600)
-
+serial_port = serial.Serial('COM7', 9600, timeout=0)
 
 #this is just to import rl agent from a different folder
 rl_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../rl")))
@@ -29,36 +29,53 @@ scale_factor = 0.6
 first_frame = True
 grid_dim = (5, 5)
 
-#Robot Constants
-robot_pos = 0
 
-
-def get_reward_vision(ball_pos):
+def get_reward_vision(robot_pos, ball_pos):
     if (robot_pos == ball_pos):
         return 1
     else:
         return -0.1 * (abs(robot_pos - ball_pos))
     
 def resetRobot():
+    #sendToRobot(17)
     sendToRobot(17)
 
 def sendToRobot(msg):
-    serial_port.write(str(msg).encode())
+    #30 is right
+    #32 is left
+	serial_port.write(struct.pack('>B', int(msg)))
 
-def checkValidMove(action):
+def readFromRobot():
+    msg = -1
+    while(msg != 1):
+        msg = serial_port.read()
+        if msg:
+            print(msg)
+
+def actionToCommand(action):
+    if int(action) == 1:
+        return 32
+    elif int(action) == 2:
+        return 30
+ 
+
+def checkValidMove(robot_pos, action):
+   # print(str(action) + ", " + str(robot_pos) )
     if (robot_pos == 0):
-        if action == 1:
+        if int(action) == 1:
             return False
     if (robot_pos == 4):
-        if action == 2:
+        if int(action) == 2:
             return False
     return True
 
-def updateRobotPosition(action):
-    if action == 1:
-        robot_pos -= 1
-    elif action == 2:
-        robot_pos += 1
+def updateRobotPosition(robot_pos, action):
+    if int(action) == 1:
+        robot_pos = robot_pos - 1
+    elif int(action) == 2:
+        robot_pos = robot_pos + 1
+
+    return robot_pos
 
 #RL constants
 EPSILON =       1    # greedy police
@@ -75,30 +92,39 @@ agent = rl_agent(
 
 
 agent.init_q_table()
-resetRobot()
+
+#resetRobot()
 
 i = 0
 epochs = 10000
 grid_dim = (5,8)
+robot_pos = 0
 
+readFromRobot()
+
+'''
 while(True):
 #while(i < epochs):
-    
+    #print(robot_pos)
     #get state
     cell = v.getCell(cap,scale_factor,first_frame,grid_dim, draw_frame=True)
-    robot_pos = robot.get_pos()
+    
     if(len(cell) < 1):
         continue
+    
     state = (cell[0],robot_pos)
 
     #get action
     action = agent.get_action(str(state))
+    if action != 0:
+        if(checkValidMove(robot_pos, action)):
+            robot_ready = readFromRobot()
+            command = actionToCommand(action)
+            sendToRobot(command)
+            robot_pos = updateRobotPosition(robot_pos, action)
 
-    if(checkValidMove(action)):
-        sendToRobot(action)
-        updateRobotPosition(action)
     #get reward
-    reward = get_reward_vision(cell[0])
+    reward = get_reward_vision(robot_pos, cell[0])
 
     #get state prime
     cell_prime = v.getCell(cap,scale_factor,first_frame,grid_dim)
@@ -108,7 +134,7 @@ while(True):
     state_prime = (cell_prime[0] , robot_pos_prime)
 
 
-    print(str(state) + ", " + str(action) + ", " + str(reward) + ", " + str(state_prime))
+    print(str(cell) + str(state) + ", " + str(action) + ", " + str(reward) + ", " + str(state_prime))
 
     #update q table
     agent.update(str(state),action,reward,str(state_prime))
@@ -119,9 +145,10 @@ while(True):
 
 
    # i = i + 1
-
+    
     if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
 cap.release()
 cv2.destroyAllWindows()
+'''
