@@ -62,46 +62,65 @@ void setup()
 
 void loop()
 {  
+  if(counter == 0)
+    {
+      gridStepPosition = 1500;
+      stepper.moveTo(gridStepPosition);
+      counter++;
+    }
+    
   if(Serial.available()){
     incomingByte = Serial.read();
 
-    //Serial.print("I received: ");
-    //Serial.println(incomingByte, DEC);
-    
-      if(incomingByte == 30){
-        //Dont let go past 5 grid spaces
-        
-        if(stepper.currentPosition() >= -1002){
-          gridStepPosition = gridStepPosition - stepperMovement;
-          stepper.moveTo(gridStepPosition);
-        }
-      }
-      else if(incomingByte == 32){
-       gridStepPosition = gridStepPosition + stepperMovement;
+    //resetting and homing the robot to get true Zero position
+ 
+
+    //position 1
+    if(incomingByte == 16){
+      gridStepPosition = 0;
+      stepper.moveTo(gridStepPosition);
+    }
+    //position 2
+    else if(incomingByte == 17){
+       //gridStepPosition = gridStepPosition - stepperMovement;
+       gridStepPosition = -334;
+       //time = millis();
        stepper.moveTo(gridStepPosition);
-      }
-      else if(incomingByte == 17){
+     }
+     //position 3
+     else if(incomingByte == 18){
+       gridStepPosition = -668;
+       stepper.moveTo(gridStepPosition);
+     }
+     //position 4
+     else if(incomingByte == 19){
        //big value to reset from limit switch
-       gridStepPosition = 1500;
+       gridStepPosition = -1002;
        stepper.moveTo(gridStepPosition);
-      }
-      else
-      {
+     }
+     //position 5
+     else if(incomingByte == 20){
+        gridStepPosition = -1336;
+        stepper.moveTo(gridStepPosition);
+     }
+     else
+     {
         incomingByte = 0;
-      }
+     }
    }
 
     
-    if(stepper.distanceToGo() == 0){
+   if(stepper.distanceToGo() == 0){
       stepper.move(0);
       gridPosition = stepper.currentPosition() / 334;
-      Serial.write(gridPosition);
-      /*
-      time = millis();
-      seconds = time / 1000.0;
-      Serial.print(seconds);
-      Serial.print("\n");
-      */
+      //Serial.write(gridPosition);
+
+      seconds = time/1000;
+      if(time != 0){
+        Serial.print(time);
+        Serial.print("\n");
+      }
+      
     }
 
     if(digitalRead(A0) == 0)
