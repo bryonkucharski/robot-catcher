@@ -1,10 +1,11 @@
-import collections
-import numpy as np
 import cv2
+import numpy as np
+import collections # For deque
 
 # Enumerations to ease tuple access 
 x = 0
 y = 1
+
 
 def getCell(cap, scale_factor, first_frame, grid_dim, draw_frame = False):
     # Capture frame
@@ -43,11 +44,12 @@ def get_cell_dimensions(img_dim, grid_dim):
 # TODO Understand all HoughCircle parameters, account for no circles etc
 def get_circle(img, debug = False):
 	grey_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+	# TODO: Make filter size adaptive?
 	filter_size = 4
 
 	# Keep calling HoughCircles() and adjusting filter size until only 1 or 0 circles are returned
 	while (1):
-		#print("While")
 		blur_img = cv2.blur(grey_img, (filter_size,filter_size))
 		circles = cv2.HoughCircles(blur_img, cv2.HOUGH_GRADIENT, 1, 20, param1 = 50, param2 = 30, minRadius = 1, maxRadius = 50)
 
@@ -107,8 +109,10 @@ def temporal_filter(center, radius):
 	else:
 		return center, radius
 		
+
 def weighted_average(t0, t1, tau):
 	return int(round(t0*(1-tau) + t1*tau))
+
 
 def pixel_to_cell(circle_center, cell_dim):
 	if circle_center:
