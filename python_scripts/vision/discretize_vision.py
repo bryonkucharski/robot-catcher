@@ -1,22 +1,19 @@
 import collections
-
 import numpy as np
-
 import cv2
 
 # Enumerations to ease tuple access 
 x = 0
 y = 1
 
-
-
-def getCell(cap, scale_factor, first_frame ,grid_dim, draw_frame = False):
-    	# Capture frame
+def getCell(cap, scale_factor, first_frame, grid_dim, draw_frame = False):
+    # Capture frame
 	ret, img1 = cap.read()
 
 	# Resize to ease processing time, save screen space for plotting multiple frames
 	img1 = cv2.resize(img1, (0,0), fx=scale_factor, fy=scale_factor)
 
+	# Hard coded crop - should figure out better method
 	img1 = img1[0:265, 240:351]
 
 	if (first_frame):
@@ -28,24 +25,21 @@ def getCell(cap, scale_factor, first_frame ,grid_dim, draw_frame = False):
 	circle_center, radius = get_circle(img1)
 	cell = pixel_to_cell(circle_center, cell_dim)
 
-	img2 = build_img2(img1, img_dim, grid_dim, cell_dim, circle_center, radius)
-	img3 = build_img3(img_dim, grid_dim, cell_dim, cell)
-
-	# Change to hstack() for horizontal plotting
-	total = np.vstack((img1, img2, img3))
-
 	if(draw_frame):
+		img2 = build_img2(img1, img_dim, grid_dim, cell_dim, circle_center, radius)
+		img3 = build_img3(img_dim, grid_dim, cell_dim, cell)
+
+		# Change to vstack() for veritical plotting
+		total = np.hstack((img1, img2, img3))
 		cv2.imshow('image', total)
 
 	return cell
-
 
 
 def discretize_ball_img(filename, debug, grid_dim):
 	img1 = open_img(filename)
 
 	img_dim = img1.shape[1], img1.shape[0]
-	#grid_dim = (8, 5)
 	cell_dim = get_cell_dimensions(img_dim, grid_dim)
 
 	circle_center, radius = get_circle(img1)
@@ -66,7 +60,7 @@ def get_cell_dimensions(img_dim, grid_dim):
 
 
 # TODO Understand all HoughCircle parameters, account for no circles etc
-def get_circle(img):
+def get_circle(img, debug = False):
 	grey_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	filter_size = 4
 
@@ -93,12 +87,14 @@ def get_circle(img):
 		circles = np.uint16(np.around(circles))
 		num_circles = circles.shape[1]
 
-		#print("Filter size: " + str(filter_size) + "x" + str(filter_size) + "\tNumber of circles: " + str(num_circles))
+		if debug:
+			print("Filter size: " + str(filter_size) + "x" + str(filter_size) + "\tNumber of circles: " + str(num_circles))
 
 		if (num_circles > 1):
 			filter_size = filter_size + 1
 		elif (num_circles == 1):
-			#print(filter_size)
+			if debug:
+				print(filter_size)
 			break
 
 	center = (circles[0,0,0], circles[0,0,1])
@@ -112,6 +108,7 @@ def get_circle(img):
 
 	return center, radius
 
+# More elegent way to declare?
 center_buffer = collections.deque([], 2)
 radius_buffer = collections.deque([], 2)
 
@@ -160,6 +157,7 @@ def build_blank_img(img_dim):
 
 def fill_cell(img, cell_dim, cell):
 	cv2.rectangle(img, (cell_dim[x]*cell[x],cell_dim[y]*cell[y]), (cell_dim[x]*(cell[x]+1),cell_dim[y]*(cell[y]+1)), (0,255,0), -1)
+
 
 def build_img2(img1, img_dim, grid_dim, cell_dim, circle_center, radius):
 	img2 = img1.copy()
