@@ -36,25 +36,6 @@ def getCell(cap, scale_factor, first_frame, grid_dim, draw_frame = False):
 	return cell
 
 
-def discretize_ball_img(filename, debug, grid_dim):
-	img1 = open_img(filename)
-
-	img_dim = img1.shape[1], img1.shape[0]
-	cell_dim = get_cell_dimensions(img_dim, grid_dim)
-
-	circle_center, radius = get_circle(img1)
-
-	cell = pixel_to_cell(circle_center, cell_dim)
-
-	if (debug):
-		print_all_coordinates(img_dim, grid_dim, cell_dim, circle_center, cell)
-		img2 = build_img2(img1, img_dim, grid_dim, cell_dim, circle_center, radius)
-		img3 = build_img3(img_dim, grid_dim, cell_dim, cell)
-		show_subplots(img1, img2, img3)
-	else:
-		print(circle_center)
-
-
 def get_cell_dimensions(img_dim, grid_dim):
 	return int(round(img_dim[x]/grid_dim[x])), int(round(img_dim[y]/grid_dim[y]))
 
