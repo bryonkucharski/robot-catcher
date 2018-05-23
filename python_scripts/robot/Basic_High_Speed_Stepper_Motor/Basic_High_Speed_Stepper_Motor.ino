@@ -2,12 +2,13 @@
 
 //this is for no microstepping
 //information:
-//it takes 200 steps to get 1 revolution 
+//it takes 206 steps to get 1 revolution 
 //GT2 belt = 2mm peak to peak
 //20 tooth sprocket * 2mm peak to peak = 40mm per revolution
 //some QUIK MAFS
 //to travel 1000mm it would take 1000mm/40mm = 25 revolutions
-//200 steps * 25 = 
+//206 steps * 25 = 5150
+//334.75 == steps needed for 65 mm
 
 AccelStepper stepper(1,9,8); // Defaults to AccelStepper::FULL4WIRE (4 pins) on 2, 3, 4, 5
 
@@ -21,40 +22,31 @@ AccelStepper stepper(1,9,8); // Defaults to AccelStepper::FULL4WIRE (4 pins) on 
 //Limit switch black wire to ground
 //Limit switch green wire to pin A0
 
-unsigned long time;
-double seconds;
-bool flag;
-double mmToRevolutions;
-double mmToSteps;
-double mm;
+   //Negative mmToSteps : Towards end
+   //Positive mmToStep : Towards Stepper Motor
+   //stepper.moveTo(mmToSteps);
+
 int incomingByte = 0;
 #define mmPerRevolution 40
 #define stepsPerRevolution 206
-#define stepperMovement 334
 int counter;
 int gridStepPosition = 0;
 int gridPosition = 0;
 
-//right 77
-//334.75 == steps needed for 65 mm
+//added in for modularity
+int amountOfGridSpaces = 5;
+int totalStepsFor2D = 1339;
+int stepPositionValue;
+
+//Amount of steps for grid space
+#define stepperMovement 334
 
 void setup()
 {  
    //starts the serial
    Serial.begin(9600);
-   time = 0;
-   seconds = 0;
-   mmToSteps = 0;
    counter = 0;
-   /* math isnt needed right now
-   mm = movement;
-   mmToRevolutions = mm / mmPerRevolution;
-   //206 steps per revolution
-   mmToSteps = mmToRevolutions * stepsPerRevolution;
-  */
-   //Negative mmToSteps : Towards end
-   //Positive mmToStep : Towards Stepper Motor
-   //stepper.moveTo(mmToSteps);
+   stepPositionValue = totalStepsFor2D / amountOfGridSpaces;
    stepper.setMaxSpeed(2000);
    stepper.setAcceleration(10000);
    pinMode(A0, INPUT);
@@ -64,63 +56,26 @@ void loop()
 {  
   if(counter == 0)
     {
+      //really large number to reset back to the limit switch
       gridStepPosition = 1500;
       stepper.moveTo(gridStepPosition);
       counter++;
     }
     
   if(Serial.available()){
+    //reads serial communication and saves what grid space it need to go to
     incomingByte = Serial.read();
 
-    //resetting and homing the robot to get true Zero position
- 
+    //takes modular amount of steps for position and multiplies it by the position to obtain moveTo location
+    gridStepPosition = stepPositionValue * incomingByte;
 
-    //position 1
-    if(incomingByte == 16){
-      gridStepPosition = 0;
-      stepper.moveTo(gridStepPosition);
-    }
-    //position 2
-    else if(incomingByte == 17){
-       //gridStepPosition = gridStepPosition - stepperMovement;
-       gridStepPosition = -334;
-       //time = millis();
-       stepper.moveTo(gridStepPosition);
-     }
-     //position 3
-     else if(incomingByte == 18){
-       gridStepPosition = -668;
-       stepper.moveTo(gridStepPosition);
-     }
-     //position 4
-     else if(incomingByte == 19){
-       //big value to reset from limit switch
-       gridStepPosition = -1002;
-       stepper.moveTo(gridStepPosition);
-     }
-     //position 5
-     else if(incomingByte == 20){
-        gridStepPosition = -1336;
-        stepper.moveTo(gridStepPosition);
-     }
-     else
-     {
-        incomingByte = 0;
-     }
+    //needs to be negative due to going away from motor
+    stepper.moveTo(-gridStepPosition);
    }
 
     
    if(stepper.distanceToGo() == 0){
-      stepper.move(0);
-      gridPosition = stepper.currentPosition() / 334;
-      //Serial.write(gridPosition);
-
-      seconds = time/1000;
-      if(time != 0){
-        Serial.print(time);
-        Serial.print("\n");
-      }
-      
+      stepper.move(0);  
     }
 
     if(digitalRead(A0) == 0)
@@ -144,8 +99,7 @@ void loop()
       
     }
     
-    stepper.run();
-    
-  
+    stepper.run(); 
+     
 }
 
