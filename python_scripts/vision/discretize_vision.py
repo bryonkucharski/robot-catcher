@@ -27,10 +27,10 @@ def getCell(cap, scale_factor, first_frame, grid_dim, draw_frame = False):
 
 	if(draw_frame):
 		img2 = build_img2(img1, img_dim, grid_dim, cell_dim, circle_center, radius)
-		img3 = build_img3(img_dim, grid_dim, cell_dim, cell)
+		#img3 = build_img3(img_dim, grid_dim, cell_dim, cell)
 
 		# Change to vstack() for veritical plotting
-		total = np.hstack((img1, img2, img3))
+		total = np.hstack((img1, img2))
 		cv2.imshow('image', total)
 
 	return cell
@@ -100,13 +100,15 @@ def temporal_filter(center, radius):
 	radius_buffer.append(radius)
 	
 	if len(center_buffer) == 2:
-		filtered_center_x = int(round(center_buffer[1][x]*(1-tau) + center_buffer[0][x]*tau))
-		filtered_center_y = int(round(center_buffer[1][y]*(1-tau) + center_buffer[0][y]*tau))
-		filtered_radius = int(round(radius_buffer[1]*(1-tau) + radius_buffer[0]*tau))
+		filtered_center_x = weighted_average(center_buffer[1][x], center_buffer[0][x], tau)
+		filtered_center_y = weighted_average(center_buffer[1][y], center_buffer[0][y], tau)
+		filtered_radius = weighted_average(radius_buffer[1], radius_buffer[0], tau)
 		return (filtered_center_x, filtered_center_y), filtered_radius
 	else:
 		return center, radius
 		
+def weighted_average(t0, t1, tau):
+	return int(round(t0*(1-tau) + t1*tau))
 
 def pixel_to_cell(circle_center, cell_dim):
 	if circle_center:
