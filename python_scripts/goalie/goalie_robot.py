@@ -1,3 +1,11 @@
+'''
+    Bryon Kucharski
+    Wentorth Institute of Technology
+    Summer 2018
+    
+    A Tablular method of Reinforement learning with a real world one dimensional robot
+
+'''
 import os, sys, inspect
 import random
 import time
@@ -45,20 +53,35 @@ def sendToRobot(msg):
     #32 is left
 	serial_port.write(struct.pack('>B', int(msg)))
 
-def readFromRobot():
-    msg = -1
-    while(msg != 1):
-        msg = serial_port.read()
-        if msg:
-            print(msg)
 
 def actionToCommand(action):
+    """
+    Converts the  action of the robot to the interger number the arduino will understand
+
+    Args:
+        action: 0 stay, 1 left, 2 right
+    
+    Returns:
+        The interger command to send through serial to the robot
+    """
+
     if int(action) == 1:
         return 32
     elif int(action) == 2:
         return 30
 
 def positionToCommand(new_robot_pos):
+    
+    """
+    Converts the new position of the robot to the interger number the arduino will understand
+
+    Args:
+        new_robot_pos: the new robot position that the robot will be told to move to
+    
+    Returns:
+        The interger command to send through serial to the robot
+    """
+
     if new_robot_pos == 0:
         return 16
     elif new_robot_pos == 1:
@@ -72,7 +95,18 @@ def positionToCommand(new_robot_pos):
  
 
 def checkValidMove(robot_pos, action):
-   # print(str(action) + ", " + str(robot_pos) )
+    """
+    Determines if requested move is within robot bounds
+
+    Args:
+        robot_pos: current position of the robot
+        action: action that is being performed
+    
+    Returns:
+        True If the action is allowed to be performed
+        OR
+        False If the action is not allowed to be performed
+    """
     if (robot_pos == 0):
         if int(action) == 1:
             return False
@@ -82,6 +116,17 @@ def checkValidMove(robot_pos, action):
     return True
 
 def updateRobotPosition(robot_pos, action):
+    """
+    Updates the position of the robot in the software point of view
+    Note - still need to send the action to the robot
+
+    Args:
+        robot_pos: current position of the robot
+        action: action that is being performed
+    
+    Returns:
+        The new robot position based on the action
+    """
     if int(action) == 1:
         robot_pos = robot_pos - 1
     elif int(action) == 2:
@@ -102,7 +147,6 @@ agent = rl_agent(
                )
 
 
-
 agent.init_q_table()
 
 #resetRobot()
@@ -113,43 +157,39 @@ grid_dim = (5,8)
 robot_pos = 0
 
 
-
 while(True):
 #while(i < epochs):
-    #print(robot_pos)
-    #get state
-    #start = time.time()
+  
+    ####Get the State From Vision####
     #this takes about 20 - 30 ms or .02 to .03 s
     cell = v.getCell(cap,scale_factor,first_frame,grid_dim, draw_frame=True)
-    #end = time.time()
-    #elapsed = end - start
-    #print(elapsed*1000.0)
     if(len(cell) < 1):
         continue
-    
     state = (cell[0],robot_pos)
-    #print(state)
 
-    #get action
+
+    ####Get the Action to Take From The Table####
     action = agent.get_action(str(state))
 
-    #if(checkValidMove(robot_pos, action)):
-        #robot_ready = readFromRobot()
-    #if( cell[1] == 1 ):
-
+    #if acton is valid, perform the action by sending it to the robot via serial
     if checkValidMove(robot_pos, action): 
+
+        #get the new position the robot should be in based on the action
         robot_pos = updateRobotPosition(robot_pos, action)
-        print(robot_pos)
+        
+        #if we need the robot to actually move
         if action != 0:
+            #convert the action to the integer command agreed upon with arduino code
             command = positionToCommand(robot_pos)
-            print(command)
+            #if the command isnt the same position that were already in - dont want to send the same command twice in a row, it will only slow down the serial port
             if command != robot_pos:
+                #send the action to take
                 sendToRobot(command)
 
-    #get reward
+     ####Get the Reward After the Action has been taken####
     reward = get_reward_vision(robot_pos, cell[0])
 
-    #get state prime
+     ####Get the Next State After the Action has been taken####
     cell_prime = v.getCell(cap,scale_factor,first_frame,grid_dim)
     robot_pos_prime = robot_pos
     if(len(cell_prime) < 1):
@@ -159,13 +199,12 @@ while(True):
 
     print(str(cell) + str(state) + ", " + str(action) + ", " + str(reward) + ", " + str(state_prime))
 
-    #update q table
+     ####Update the Table####
     agent.update(str(state),action,reward,str(state_prime))
 
     #if (i % 10 == 0):
         #os.system('cls')
         #agent.print_q_table()
-
   
    # i = i + 1
     

@@ -3,23 +3,19 @@
     Wentorth Institute of Technology
     Spring 2018
     
-    Modified gridworld - 2d goalie
+    Simulated One Dimensional Robot using stddraw grahpics library and a tabular Reinforcement Learning agent 
 '''
+
+
 import numpy as np
 import os, sys, inspect
 import time
 from matplotlib import pyplot
 from random import randint
 
+
+#uncomment to set stddraw window to top left of screen
 #os.environ['SDL_VIDEO_WINDOW_POS'] = str(0) + "," + str(0)
-
-
-#this is just to import stddraw from a different folder
-princeton_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../princeton_lib")))
-if princeton_subfolder not in sys.path:
-    sys.path.insert(0, princeton_subfolder)
-
-import stddraw
 
 #this is just to import rl agent from a different folder
 rl_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../rl")))
@@ -28,58 +24,29 @@ if rl_subfolder not in sys.path:
 
 from qlearning_agent import rl_agent
 
-#this is just to import stddraw from a different folder
+#this is just to import vision from a different folder
 vision_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../vision")))
 if vision_subfolder not in sys.path:
     sys.path.insert(0, vision_subfolder)
 
 import discretize_vision
 
-def drawScene(goalie_pos, ball_x, ball_y):
-    
-    stddraw.clear()
-    stddraw.setPenColor(stddraw.BLACK)
-    
-    #gridlines
-    for i in range(1,GRID_NUM_HEIGHT):
-        stddraw.filledRectangle(0,GRID_SIZE*i,WIDTH,0)
+robot_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../robot")))
+if robot_subfolder not in sys.path:
+    sys.path.insert(0, robot_subfolder)
 
-    for i in range(1,GRID_NUM_WIDTH):
-        stddraw.filledRectangle(GRID_SIZE * i,0,0,HEIGHT)
+from simulated_1D_robot import simulated_1D_robot
 
-    #goalie
-    stddraw.setPenColor(stddraw.BLUE)
-    stddraw.filledRectangle(goalie_pos*GRID_SIZE,0,GRID_SIZE,GRID_SIZE) #x,y,size_x,size_y
-    
-    #Ball
-    stddraw.setPenColor(stddraw.GREEN)
-    stddraw.filledCircle(((ball_x *GRID_SIZE) + (GRID_SIZE/2)) ,(HEIGHT - ((ball_y *GRID_SIZE) + (GRID_SIZE/2))), GRID_SIZE/2)
-        
-def check_valid_move(goalie_pos, action):
-    if goalie_pos == 0 and action == 1:
-        return False
-    elif goalie_pos == GRID_NUM_WIDTH-1 and action == 2:
-        return False
-    return True
 
-#Enviornment Constants
-GRID_NUM_HEIGHT = 8
-GRID_NUM_WIDTH = 5
-GRID_SIZE = 75 # in pixels
-WIDTH = GRID_SIZE*GRID_NUM_WIDTH
-HEIGHT = GRID_SIZE*GRID_NUM_HEIGHT
 
 #RL constants
 EPSILON =       1    # greedy police
 ALPHA =         0.5     # learning rate
 GAMMA =         1       # discount 
-ITERS =         1000     #iterations
-UPDATE_FREQ =   60    #How often to update environment
 
-#stddraw.setXscale(0, WIDTH)
-#stddraw.setYscale(0, HEIGHT)
-#stddraw.setCanvasSize(WIDTH,HEIGHT)
 
+
+#declare agent with 3 actions, 0 for stay, 1 for left, 2 for right
 agent = rl_agent(
                 list(range(3)), #STAY,LEFT,RIGHT
                 GAMMA,
@@ -87,90 +54,94 @@ agent = rl_agent(
                 EPSILON
                 )
 
+#created the robot using tthe stddraw graphics library 
+robot = simulated_1D_robot(
+                goalie_pos_start = 3, 
+                GRID_NUM_HEIGHT = 8, 
+                GRID_NUM_WIDTH = 5, 
+                GRID_SIZE = 75 #pixels
+                )
+
+#create the q table stored in the agent
 agent.init_q_table()
-agent.init_stddraw(800)
-
-goalie_pos = 3 #randint(0,GRID_NUM_WIDTH-1)
-ball_x = randint(0, GRID_NUM_WIDTH-1)
-ball_y = 0
+#agent.init_stddraw(800)
 
 
-episodes = 0
-steps = 0
-reset  = False 
-all_steps = []
-all_iters = []
-start = time.time()
+#Main Loop constants 
+ITERS =         1000    #How many episodes to run in total
+UPDATE_FREQ =   60      #How often to update environment, in hz
+episodes = 0            #One episode is start to end of ramp
+steps = 0               #One step is one iteration of state-action-reward-state_prime-update
+reset  = False          
+all_steps = []          #used to plot
+all_iters = []          #used to plot
+
+start = time.time()     
 total_time = time.time()
 
+is_done = False
 
+#Main Loop
+'''
+    Follows the Basic RL Flow
+    While !terminated:
+        Get State
+        Get Action
+        Take Action
+        Get Reward
+        Get State Prime
+        Update Agent
+        State = State Prime
+'''
 while episodes <= ITERS:
 
     end = time.time()
     elapsed = end - start
 
-    #drawScene(goalie_pos,ball_x, ball_y)
-    #stddraw.show(0)
+    # draw the robot every frame
+    robot.drawScene()
     
+    #this is what controls how quickly each iteration runs, if it updates too quick the robot will move 
+    # too quick to see the updates. If you are not drawing the scene, you dont need to use this
     if elapsed > 1/UPDATE_FREQ: #how fast the enviornment should move
 
+        #uncomment this to use vision to get the state of the enviornment
         #img = vision.get_screenshot(0,0, WIDTH, HEIGHT)
         #x,y = vision.pixelToCell(img, GRID_SIZE,GRID_SIZE, debug = True)
-        x = ball_x
-        y = ball_y
+      
         start = time.time()
 
-        #get current state
-        state = [goalie_pos, x]
-        #state = [goalie_pos, ball_x, ball_y]
-        
-        #get action
+        ####Get the State####
+        state = robot.get_state_array()
+
+        #####Get the Action####
         action = agent.get_action(str(state))
-
-        #check if enviornment will allow the new state
-        is_valid = check_valid_move(goalie_pos, action)
-
-        if is_valid:
-            if action == 0: #STAY
-                goalie_pos = goalie_pos
-            elif action == 1: #LEFT
-                goalie_pos = goalie_pos - 1
-            elif action == 2: #RIGHT
-                goalie_pos = goalie_pos + 1
-            
-        #reward decision  -.04 every action, 1 for making it into the goal
-        #reward = -.04
-        if (ball_x == goalie_pos):
-            reward = 1
-        else:
-           reward = -0.1 * (abs(goalie_pos - ball_x))
-        
+ 
+        #####Perform the Action in the Environment####
+        #####Gets the State Prime and Reward####
+        state_prime, reward, is_done = robot.step(action, stateType='array')
+    
+        #uncomment this to use vision to get the state of the enviornment
         #get next state
         #img = vision.get_screenshot(0,0, WIDTH, HEIGHT)
         #x_,y_ = vision.pixelToCell(img, GRID_SIZE,GRID_SIZE, debug = False)
-        x_ = ball_x
-        y_ = ball_y
-        state_prime = [goalie_pos, x_]
         
-
-        #update based on experience {s,a,r,s'}
-        
+        ####Update Based On Experience {s,a,r,s'}####
         agent.update(str(state),action,reward,str(state_prime))
-        agent.visualize_q_table(800)
-        ball_y = ball_y + 1
-        if(ball_y > GRID_NUM_HEIGHT-1):
-            reset = True
+
+
+        #agent.visualize_q_table(800)
         steps = steps + 1
 
+        #uncomment this to print q table to console
         #os.system('cls')
         #print(agent.print_q_table())
-        print('itr: ' + str(episodes) +' reward: ' + str(reward) + " x: " + str(x) + "  x_: " + str(x_) + " goalie_pos: " + str(goalie_pos))
-        if reset:
-           
-            ball_x = randint(0, GRID_NUM_WIDTH-1)
-            ball_y = 0
+        print('itr: ' + str(episodes) +' reward: ' + str(reward) + " x: " + str(state[0]) + "  x_: " + str(state_prime[0]) + " goalie_pos: ")
+
+        #If the robot is at the bottom of the ramp, update stpes/iterations/episodes
+        if is_done:
+            is_done = False
             episodes = episodes + 1
-            reset = False
             all_steps.append(steps)
             all_iters.append(episodes)
             steps = 0

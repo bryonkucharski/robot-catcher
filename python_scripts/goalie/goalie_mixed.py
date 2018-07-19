@@ -24,12 +24,6 @@ if robot_subfolder not in sys.path:
 
 from virtual_robot import virtual_robot
 
-#variables for vision
-cap = cv2.VideoCapture(1)
-scale_factor = 0.6
-first_frame = True
-grid_dim = (5, 5)
-
 
 def get_reward_vision(robot_pos, ball_pos):
     if (robot_pos == ball_pos):
@@ -40,6 +34,11 @@ def get_reward_vision(robot_pos, ball_pos):
 
 
     
+#Vision Variables
+cap = cv2.VideoCapture(1)
+scale_factor = 0.6
+first_frame = True
+grid_dim = (5, 5)
 
 #RL constants
 EPSILON =       1    # greedy police
@@ -66,20 +65,22 @@ robot = virtual_robot(
 agent.init_q_table()
 
 i = 0
-epochs = 10000
-grid_dim = (5,8)
+grid_dim = (5,8)        #
+ITERS =         1000    #How many episodes to run in total
+UPDATE_FREQ =   60      #How often to update environment, in hz
+episodes = 0            #One episode is start to end of ramp
 
-while(True):
-#while(i < epochs):
+while episodes <= ITERS:
     
-    #get state
+    ####Get the State####
     cell = v.getCell(cap,scale_factor,first_frame,grid_dim, draw_frame=True)
-    robot_pos = robot.get_pos()
+    robot_pos = robot.get_goalie_pos()
+
     if(len(cell) < 1):
         continue
     state = (cell[0],robot_pos)
 
-    #get action
+    ####Get the Action####
     action = agent.get_action(str(state))
     
     robot.update_position(action)

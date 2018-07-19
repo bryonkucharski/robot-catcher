@@ -34,6 +34,9 @@ GAMMA =         1       # discount
 def wait_for_phrase(phrase):
     """
         Blocking call - reads socket until the data is the same as phrase "start", "stop", "test", etc.
+
+        Args:
+            phrase: The string to listen to over the socket
     """
     while(server.getData() != phrase):
         print("waiting for" + phrase )
@@ -41,6 +44,10 @@ def wait_for_phrase(phrase):
 def wait_for_number(num):
     """
         Blocking call - reads socket until the header is the same as num "0", "1", "2", etc.
+
+        Args:
+            num: The num to listen to over the socket
+
     """
     header = '-1'
     while header != num:
@@ -51,7 +58,17 @@ def wait_for_number(num):
 
 
 def get_state_vision(grid_dim):
+    """
+    Gets the state by cropping an image from the unity enviornment (hardcode crop for now)
+    Then calls the vision functions to return the cell of the ball
+
+    Args:
+        A tuple of the grid dimensions. EX (5,8)
     
+    Returns:
+        The state as [robot_x, ball_x, ball_y ]
+    """
+    #hardcoded numbers, these will change
     screenImage = ImageGrab.grab(bbox=(305, 157, 580, 597))#(X, Y) starting position ; (W, H) ending position
     img = np.array(screenImage)#convert the image to a numpy array
     img_dim = img.shape[1], img.shape[0]
@@ -68,6 +85,15 @@ def get_state_vision(grid_dim):
     
 
 def get_robot_pos():
+    """
+    Sends the number 3 over the socket
+    Unity is waiting for the number 3 and will return the robot position
+
+    NOTE: Prob dont need to do this and can use vision instead
+
+    Returns:
+        The robot position from Unity
+    """
     server.sendData('3')
     header = '-1'
     data = wait_for_number('3')
@@ -79,12 +105,12 @@ def get_robot_pos():
 
    
 def get_state_unity():
-    '''
+    """
     requst data from unity
     wait until socket header is 0
     parse data
+    """
 
-    '''
     server.sendData('0')
     header = '-1'
     data = wait_for_number('0')
@@ -95,10 +121,23 @@ def get_state_unity():
 
 
 def send_action(a):
+    """
+    Sends the string over a socket in the form of '1,action'
+    To move left, it would be the string '1,1'
+    Unity is checking for the header to be 1
+    """
+
     server.sendData('1,' + str(a))
     wait_for_number('1')
 
 def get_reward():
+    """
+    Sends the number 2 over the socket
+    Unity is waiting for the number 2 and will return the reward
+
+    Returns:
+        The reward from Unity
+    """
     server.sendData('2')
     data = wait_for_number('2')
     reward = float(data[1])
@@ -123,7 +162,7 @@ server = tcp_socket(
                     )
 
 agent.init_q_table()
-agent.init_stddraw(500)
+#agent.init_stddraw(500)
 
 i = 0
 epochs = 1000
@@ -153,25 +192,24 @@ while(i < epochs):
    # if(elapsed > update_rate):
     start = time.time()
 
-    (state, ball_y) = get_state_vision(grid_dim)
-    #state = get_state_unity()
+    ####Get the State####
+    #(state, ball_y) = get_state_vision(grid_dim)
+    state = get_state_unity()
 
-    #get action
+    ####Get the Action####
     action = agent.get_action(str(state))
     
+    #Perform the action by sending a command to Unity
     send_action(action)
     
+    ####Get the Reward from Unity####
     reward = get_reward()
     total_reward = total_reward + reward
-    
-    #print(str(state[0]) + str(state[1]) + str(ball_y))
-    #if ((state[0] == state[1]) and (ball_y == 8)):
-     #  print("CATCH")
-    #if(state[1] == )
 
-    state_prime, ball_y = get_state_vision(grid_dim)
-    #state_prime = get_state_unity()
-    
+    ####Get the State Prime####
+    #state_prime, ball_y = get_state_vision(grid_dim)
+    state_prime = get_state_unity()
+
     #print(str(state) + ", " + str(action) + ", " + str(reward) + ", " + str(state_prime))
     agent.update(str(state),action,reward,str(state_prime))
 
@@ -180,7 +218,7 @@ while(i < epochs):
         num_epochs.append(i)
     #    os.system('cls')
         #agent.print_q_table()
-    agent.visualize_q_table(500)
+    #agent.visualize_q_table(500)
 
 
     i = i + 1

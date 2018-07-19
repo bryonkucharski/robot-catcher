@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import collections
 import sys
+import time
 sys.path.append("../../") #go back to vision folder
 import discretize_vision as v
 
@@ -11,7 +12,7 @@ import discretize_vision as v
 #0 for integrated webcam
 cap = cv2.VideoCapture(1)
 
-scale_factor = 0.6
+scale_factor = 1
 first_frame = True
 grid_dim = (5, 8)
 
@@ -21,9 +22,10 @@ y = 1
 
 
 while (True):
-
+	start = time.time()
 	cell = v.getCell(cap,scale_factor,first_frame,grid_dim, draw_frame=True)
-
+	end = time.time()
+	print(end-start)
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 	    break
 
