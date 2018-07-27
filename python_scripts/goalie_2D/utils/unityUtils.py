@@ -41,42 +41,74 @@ class UnityInterface:
         done = (data[2] == "True")
         return reward, done
 
-    def step(self):
+    def step(self, type):
      
-        header = '-1'
-        self.server.sendData('3')
-        data = self.wait_for_number('3')
+        self.server.sendData('2,' + type)
+        data = self.wait_for_number('2')
+        if type == "x":
+            robot_x = int(data[1])
+            ball_x = int(data[2])
+            reward = float(data[3])
+            done = (data[4] == "True")
+            #print([robot_x,ball_x],reward,done)
+            return [robot_x,ball_x],reward,done
+        elif type == "y":
+            robot_y = int(data[1])
+            thrust = int(data[2])
+            reward = float(data[3])
+            done = (data[4] == "True")
+            return [robot_y,thrust],reward,done
+        elif type == "2D":
+            robot_x = float(data[1])
+            ball_x = float(data[2])
+            robot_y = float(data[3])
+            thrust = float(data[4])
+            reward = float(data[5])
+            done = (data[6] == "True")
+            return [robot_x,ball_x,robot_y,thrust],reward,done
+            
 
-        ball_x = int(data[2])
-        robot_x = int(data[1])
-        reward = float(data[3])
-        done = (data[4] == "True")
-        return [robot_x,ball_x],reward,done
-
-    def send_action(self,a):
+    def send_action(self,a,type):
         """
         Sends the string over a socket in the form of '1,action'
         To move left, it would be the string '1,1'
         Unity is checking for the header to be 1
         """
+        act = a
+        if type == "y":
+            
+            if a == 1:
+                act = 3
+            elif a == 2:
+                act = 4
 
-        self.server.sendData('1,' + str(a))
+        self.server.sendData('1,' + str(act))
         self.wait_for_number('1')
 
-    def get_state_unity(self):
+    def get_state_unity(self, type):
         """
         requst data from unity
         wait until socket header is 0
         parse data
         """
 
-        self.server.sendData('0')
-        header = '-1'
+        self.server.sendData('0,' + type)
         data = self.wait_for_number('0')
 
-        ball_x = float(data[2])
-        robot_x = int(data[1])
-        return [robot_x, ball_x]
+        if type == "x":
+            ball_x = int(data[2])
+            robot_x = int(data[1])
+            return [robot_x, ball_x]
+        elif type == "y":
+            robot_y = int(data[1])
+            thrust = int(data[2])
+            return [robot_y,thrust]
+        elif type == "2D":
+            robot_x = float(data[1])
+            ball_x = float(data[2])
+            robot_y = float(data[3])
+            thrust = float(data[4])
+            return [robot_x,ball_x,robot_y, thrust]
 
 
 

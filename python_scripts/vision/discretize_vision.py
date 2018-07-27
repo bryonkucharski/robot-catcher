@@ -6,6 +6,65 @@ import collections # For deque
 x = 0
 y = 1
 
+def get_cell_2(cap, scale_factor, first_frame, grid_dim, draw_frame = False):
+    # Capture frame
+	ret, img1 = cap.read()
+	#cv2.imshow('image', img1)
+	#print(img1)
+	#img1 = img1[179:179, 179:170]
+	# Resize to ease processing time, save screen space for plotting multiple frames
+	img1 = cv2.resize(img1, (0,0), fx=scale_factor, fy=scale_factor)
+	
+	# Hard coded crop - should figure out better method
+	img1 = img1[:,186:360]
+	#img1 = img1[y0:y1, x0:x1] 
+	if (first_frame):
+		img_dim = img1.shape[1], img1.shape[0]
+		cell_dim = get_cell_dimensions(img_dim, grid_dim)
+		#print(img_dim)
+		first_frame = False
+
+	binary_img = bgr_img_to_binary(img1, 250)
+	circle_center, radius = get_circle_2(binary_img)
+	cell = pixel_to_cell(circle_center, cell_dim)
+
+	if(draw_frame):
+		# Reconvert back to BGR
+		binary_img = cv2.cvtColor(binary_img, cv2.COLOR_GRAY2RGB)
+		img2 = build_img2(binary_img, img_dim, grid_dim, cell_dim, circle_center, radius)
+
+		# Change to vstack() for veritical plotting
+		total = np.hstack((img1, img2))
+		cv2.imshow('image', total)
+
+	return cell
+	
+def bgr_img_to_binary(img, threshold_level):
+	grey_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	filter_size = 4 # TODO: Make filter size adaptive?
+	blur_img = cv2.blur(grey_img, (filter_size,filter_size))
+	ret, binary_img = cv2.threshold(blur_img, threshold_level, 255, cv2.THRESH_BINARY)
+
+	return binary_img
+
+def get_circle_2(img, debug = False):
+	for i in range(0, img.shape[x]):
+		for j in range(0, img.shape[y]):
+			if pixel_is_white(img[i, j]):
+				# print(i,j)
+				return (j, i), 10
+	return (), 0
+	#return (2,3), 0
+
+def pixel_is_white(value):
+	if value == 255:
+		return True
+	return False
+
+
+
+
+
 
 def getCell(cap, scale_factor, first_frame, grid_dim, draw_frame = False):
     # Capture frame
@@ -116,7 +175,7 @@ def weighted_average(t0, t1, tau):
 
 def pixel_to_cell(circle_center, cell_dim):
 	if circle_center:
-		return int(circle_center[x]/cell_dim[x]), int(circle_center[y]/cell_dim[y])
+		return int(circle_center[x]/cell_dim[x]) + 1, int(circle_center[y]/cell_dim[y]) + 1
 	else:
 		return ()
 

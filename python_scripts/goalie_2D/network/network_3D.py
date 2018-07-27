@@ -45,27 +45,23 @@ K.set_session(sess)
 style.use('fivethirtyeight')
 
 from DQNAgent import DQNAgent
+from qlearning_agent import rl_agent
+
 
 from unityUtils import UnityInterface
 
-def step(action, unity):
-        
-    unity.send_action(action)
-    state_prime =  unity.get_state_unity()
-    reward, done  = unity.getReward()
-    
-    #print(state_prime, reward, done)
-    return state_prime, reward, done
+TYPE = "2D"
 
+plot_file_name = 'x2000_plot_network_5x3_' + str(TYPE) + '_robot.txt'
+averages_plot_file_name = 'x2000_plot_network_5x3_' + str(TYPE) + '_robot_averages.txt'
 
 t = 0
 EPOCHS = 2000
 OBSERVE = 32#320
 REPLAY_MEMORY = 50000
 BATCH = 32
-LEARNING_RATE = 1e-4
 
-model_name = "goalie_2d_network.py"
+model_name = "2000_goalie_network_5x3.h5"
 save_model = False
 load_model = False
 update_model = True
@@ -85,10 +81,23 @@ server = tcp_socket(
 
 unity = UnityInterface(server)
 
+
+
+
+if TYPE == "x" or TYPE == "y":
+    num_actions = 3
+    num_states = 2
+else:
+    num_actions = 5
+    num_states = 4
+
+
+
 agent = DQNAgent(#state_size =num_grid_y*num_grid_x,
-                state_size =2, 
-                action_size = 3,
-                gamma = 0.95,
+                state_size =num_states, 
+                action_size = num_actions,
+                #gamma = 0.95,
+                gamma = 0,
                 epsilon = esp,
                 epsilon_min = 0.01,
                 epsilon_decay = 0.995,
@@ -98,26 +107,37 @@ agent = DQNAgent(#state_size =num_grid_y*num_grid_x,
 
 
 done = False
-reward_count = 0
+catch_count = 0
 total_reward = 0
+last_catch = 0
+last_reward = 0
 total_rewards = []
 num_epochs = []
+average_epochs = []
 total_loss = []
+total_catches = []
+average_catches = []
+average_rewards = []
+
+open(plot_file_name, 'w').close() #resets the text file
+open(averages_plot_file_name, 'w').close() #resets the text file
+
+unity.wait_for_phrase("start")
 
 if load_model: 
     agent.load(model_name)
-
-for r in range(EPOCHS):
-    state = unity.get_state_unity()
-
-    i = 0
+i = 0
+for r in range(EPOCHS+1):
+    
+    state = unity.get_state_unity(type = TYPE)
 
     while not done:
-
+        
         action = agent.take_action(np.array([state]))
-        unity.send_action(action)
-        time.sleep(.05)
-        state_prime, reward, done = unity.step()
+        #action = agent.get_action(str(state))
+        unity.send_action(action, TYPE)
+
+        state_prime, reward, done = unity.step(type = TYPE)
         total_reward += reward
 
         if update_model:
@@ -125,36 +145,79 @@ for r in range(EPOCHS):
 
         #print("State: " + str(state) + " action: " + str(action) + " Reward: " + str(reward) + " State Prime: " + str(state_prime))
         state = state_prime
+        #agent.update(str(state),action,reward,str(state_prime))
         if done:
             done = False
             #check for a catch
             if reward == 1:
-                reward_count += 1
+                catch_count += 1
                 print("CATCH!!!")
 
             #exit this epoch    
             break
-        i = i + 1
+
+    i = i + 1
     
     if(agent.memory_length() > BATCH) and (update_model):
-        #start = time.time()
         history = agent.replay(BATCH)
-        print("epoch: " + str(r) + " history: " +  str(history.history['loss']) + " reward_count: " + str(reward_count))
+        #print("epoch: " + str(r) + " history: " +  str(history.history['loss']) + " reward_count: " + str(reward_count))
         total_loss.append(history.history['loss'])   
-
+    
     if r % 10 == 0:
         total_rewards.append(total_reward)
+        total_catches.append(catch_count)
         num_epochs.append(r)
+        print("Num Updates: " + str(num_updates) + "Epoch: " + str(r) + " Total Reward: " + str(total_reward) + " Total Catches: " + str(catch_count))
+        fh = open(plot_file_name, 'a') 
+        fh.write(str(r) + "," + str(total_reward) + "," + str(catch_count) + "\n" ) 
+        fh.close()
+
+    if r % 100 == 0:
+        
+        catches = catch_count - last_catch
+        rewards = total_reward - last_reward
+        average_catch = catches / 100.0
+        average_reward = rewards / 100.0
+
+        print(" Total catches this 100: " + str(catches) + " Average: " + str(average_catch) + " Total reward this 100: " + str(rewards) + " Average: " + str(average_reward))
+        average_catches.append(average_catch)
+        average_rewards.append(average_reward)
+        average_epochs.append(r)
+        last_catch = catch_count
+        last_reward = total_reward
+        ft = open(averages_plot_file_name, 'a') 
+        ft.write(str(r) + "," + str(average_reward) + "," + str(average_catch) + "\n" ) 
+        ft.close()
  
 
 
 if save_model:
     agent.save(model_name)
 
-
 plt.figure(1)
 plt.plot(num_epochs,total_rewards)
-plt.title("Cumulative Reward in Deep Learning 3D Simulation: Vector State")
+plt.title("Network: Cumulative Reward in 3D Simulation: " + str(TYPE))
 plt.ylabel("Cumulative Reward")
-plt.xlabel("Number of Updates")
+plt.xlabel("Number of Ball Rolls")
+plt.show()
+
+plt.figure(1)
+plt.plot(num_epochs,total_catches)
+plt.title("Network: Total Catches in 3D Simulation: " + str(TYPE))
+plt.ylabel("Catches")
+plt.xlabel("Number of Ball Rolls")
+plt.show()
+
+plt.figure(1)
+plt.plot(average_epochs,average_rewards)
+plt.title("Network: Average Reward in 3D Simulation: " + str(TYPE))
+plt.ylabel("Average Reward")
+plt.xlabel("Number of Ball Rolls")
+plt.show()
+
+plt.figure(1)
+plt.plot(average_epochs,average_catches)
+plt.title("Network: Average Catches in 3D Simulation: " + str(TYPE))
+plt.ylabel("Average Catches")
+plt.xlabel("Number of Ball Rolls")
 plt.show()

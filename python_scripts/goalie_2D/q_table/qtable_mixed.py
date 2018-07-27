@@ -16,20 +16,26 @@ if fldr not in sys.path:
 fldr = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../../rl")))
 if fldr not in sys.path:
     sys.path.insert(0, fldr)
+fldr = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../../vision")))
+if fldr not in sys.path:
+    sys.path.insert(0, fldr)    
 
 import cv2
 import serial # (pip install pySerial)
 from virtual_robot import virtual_robot
 from qlearning_agent import rl_agent
+import random
+import discretize_vision as v
+import time
 
-# Replace with specific port name & baud rate
-serial_port = serial.Serial('COM9', 9600, timeout=0)
+# Replace with specific port name & baud rate#
+serial_port = serial.Serial('COM11', 9600, timeout=0)
 
 
 def readFromPhotogate():
     val = serial_port.read(1)
     if val != b'':
-        return ord(val)
+        return ord(val) + 1
     else:
         return -1
 
@@ -79,8 +85,8 @@ robot = virtual_robot(
                     WIDTH = 1680,#width of monitor
                     HEIGHT = 1050, #height of monitor
                     dpi = 99, #dpi of the monitor
-                    ramp_length = 12, #inches, this is how wide in x you want the robot range to be, the black part of the virtual robot inches
-                    robot_y_area = gantry_plate_size * robot_spaces_y, #inches, gantry plate * num_y,this is how wide in y you want the robot range to be, the back park of the virtual robot
+                    roi_x = 12, #inches, this is how wide in x you want the robot range to be, the black part of the virtual robot inches
+                    roi_y = 8, #inches
                     number_of_states_x = robot_spaces_x, #0,1,2,3,4
                     number_of_states_y = robot_spaces_y, #0,1,2
                     initial_x = 2, #middle x
@@ -88,8 +94,33 @@ robot = virtual_robot(
                 )
 
 #agent.init_q_table()
+
+#VISION constants
+cap = cv2.VideoCapture(1)
+scale_factor = 1.0
+first_frame = True
+grid_dim = (5, 8)
+
 while(True):
+    space = readFromPhotogate()
+    x = v.get_cell_2(cap,scale_factor,first_frame,grid_dim, draw_frame=True)
     
+    if len(x) > 0:
+        print(x)
+
+    if space != -1:
+        #print(x)
+        robot.goToPosition(x[0],space)
+        print(x[0],space)
+        robot.drawRobot()
+        time.sleep(2)
+        robot.goToPosition(3,2)
+    
+    #else:
+    #   robot.goToPosition(2,1)
+
+    robot.drawRobot()
+    '''
     #state = getState(robot)
     #if state[1] != -1:
     #    print(state)
@@ -97,7 +128,7 @@ while(True):
     if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    robot.drawRobot()
+    
     
     ####Get the State####
     state = getState(robot)
@@ -120,6 +151,7 @@ while(True):
 
     #update q table
     agent.update(str(state),action,reward,str(state_prime))
+    '''
     
 
 

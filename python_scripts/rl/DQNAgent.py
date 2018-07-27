@@ -102,7 +102,10 @@ class DQNAgent:
             
         return history
         
-        
+    def predict(self, state): 
+        act_values = self.model.predict(state)
+        return np.argmax(act_values[0])  # returns action 
+
     def train(self, X_batch, y_batch):
         return self.model.train_on_batch(X_batch, y_batch)[0] #may not need the [0]
 

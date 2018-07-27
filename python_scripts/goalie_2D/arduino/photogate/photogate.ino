@@ -24,7 +24,7 @@ void loop()
   gate1Value = analogRead(gate1Pin);
   gate2Value = analogRead(gate2Pin);
 
-  //Serial.print(gate1Value);
+ // Serial.print(gate1Value);
   //Serial.print(", ");
   //Serial.println(gate2Value);
   
@@ -33,32 +33,40 @@ void loop()
     startTime = millis();
     timerStarted = true;
   }
-  else if (gate2Value < threshold && timerStarted)
+  else if (gate2Value < threshold && timerStarted == true)
   {
-    stopTime = millis();
-    float vel = (gateDistance / (stopTime - startTime));
-    int thrust = convertThrust(vel);
-    Serial.write(thrust);
-    //printTime(startTime, stopTime);
     timerStarted = false;
+    stopTime = millis();
+    unsigned long elapsedTime = stopTime - startTime;
+    if (elapsedTime)
+    {
+      float vel = (gateDistance / (stopTime - startTime));
+      int thrust = convertThrust(vel);
+      Serial.write(thrust);
+      //Serial.println(vel,10);
+    }
+    //printTime(startTime, stopTime);
   }
 }
 
 int convertThrust(float velocity)
 {
-  if (velocity >= .1575){ return 2;}
-  else if (velocity < .1575 && velocity >= .1450){return 1;}
+  
+  if (velocity >= .1850){ return 2;}
+  else if (velocity < .1850 && velocity >= .1450){return 1;}
   else if (velocity < .1450) {return 0;}
+  
 
-  /*
-   * for 5 thrust positions
-   * 
+  
+   //for 5 thrust positions
+    /*
    if (velocity >= .1725){ return 4;}
    else if (velocity < .1725 && velocity >= .1575){return 3;}
    else if (velocity < .1575 && velocity >= .1450){return 2;}
    else if (velocity < .1450 && velocity >= .1250) {return 1;}
    else if (velocity < .1250) {return 0;}  
-  */
+   */
+  
 }
 
 void printTime(unsigned long startTime, unsigned long stopTime) 
@@ -70,3 +78,4 @@ void printTime(unsigned long startTime, unsigned long stopTime)
   Serial.print(convertThrust(vel));
   Serial.println();
 }
+
