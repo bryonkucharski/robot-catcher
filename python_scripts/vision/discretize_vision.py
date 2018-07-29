@@ -16,13 +16,17 @@ def get_cell_2(cap, scale_factor, first_frame, grid_dim, draw_frame = False):
 	img1 = cv2.resize(img1, (0,0), fx=scale_factor, fy=scale_factor)
 	
 	# Hard coded crop - should figure out better method
-	img1 = img1[:,186:360]
+	img1 = img1[:, int(round(206*scale_factor)):int(round(380*scale_factor))]
+	#img1 = img1[:,206:380]
 	#img1 = img1[y0:y1, x0:x1] 
+
+
 	if (first_frame):
 		img_dim = img1.shape[1], img1.shape[0]
 		cell_dim = get_cell_dimensions(img_dim, grid_dim)
 		#print(img_dim)
 		first_frame = False
+
 
 	binary_img = bgr_img_to_binary(img1, 250)
 	circle_center, radius = get_circle_2(binary_img)
@@ -41,20 +45,29 @@ def get_cell_2(cap, scale_factor, first_frame, grid_dim, draw_frame = False):
 	
 def bgr_img_to_binary(img, threshold_level):
 	grey_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-	filter_size = 4 # TODO: Make filter size adaptive?
+	filter_size = 2 # TODO: Make filter size adaptive?
 	blur_img = cv2.blur(grey_img, (filter_size,filter_size))
 	ret, binary_img = cv2.threshold(blur_img, threshold_level, 255, cv2.THRESH_BINARY)
 
 	return binary_img
 
 def get_circle_2(img, debug = False):
-	for i in range(0, img.shape[x]):
-		for j in range(0, img.shape[y]):
-			if pixel_is_white(img[i, j]):
-				# print(i,j)
-				return (j, i), 10
-	return (), 0
+	columns = np.sum(img,axis=0)
+	sum = np.sum(columns)
+
+	if sum == 0:
+    		return (), 0
+	else:
+		return (np.argmax(columns),0),10
+	
+	#for i in range(0, img.shape[x]):
+	#	for j in range(0, img.shape[y]):
+	#		if pixel_is_white(img[i, j]):
+	#			# print(i,j)
+	#			return (j, i), 10
+	#return (), 0
 	#return (2,3), 0
+	
 
 def pixel_is_white(value):
 	if value == 255:

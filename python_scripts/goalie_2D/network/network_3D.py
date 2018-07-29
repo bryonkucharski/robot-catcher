@@ -52,8 +52,8 @@ from unityUtils import UnityInterface
 
 TYPE = "2D"
 
-plot_file_name = 'x2000_plot_network_5x3_' + str(TYPE) + '_robot.txt'
-averages_plot_file_name = 'x2000_plot_network_5x3_' + str(TYPE) + '_robot_averages.txt'
+plot_file_name = 'poster_data_2000_plot_network_5x3_' + str(TYPE) + '_robot.txt'
+averages_plot_file_name = 'poster_data_2000_plot_network_5x3_' + str(TYPE) + '_robot_averages.txt'
 
 t = 0
 EPOCHS = 2000
@@ -61,7 +61,7 @@ OBSERVE = 32#320
 REPLAY_MEMORY = 50000
 BATCH = 32
 
-model_name = "2000_goalie_network_5x3.h5"
+model_name = "poster_data_2000_goalie_network_5x3.h5"
 save_model = False
 load_model = False
 update_model = True
@@ -96,8 +96,8 @@ else:
 agent = DQNAgent(#state_size =num_grid_y*num_grid_x,
                 state_size =num_states, 
                 action_size = num_actions,
-                #gamma = 0.95,
-                gamma = 0,
+                gamma = 0.95,
+                #gamma = 0,
                 epsilon = esp,
                 epsilon_min = 0.01,
                 epsilon_decay = 0.995,
@@ -167,7 +167,7 @@ for r in range(EPOCHS+1):
         total_rewards.append(total_reward)
         total_catches.append(catch_count)
         num_epochs.append(r)
-        print("Num Updates: " + str(num_updates) + "Epoch: " + str(r) + " Total Reward: " + str(total_reward) + " Total Catches: " + str(catch_count))
+        print("Epoch: " + str(r) + " Total Reward: " + str(total_reward) + " Total Catches: " + str(catch_count))
         fh = open(plot_file_name, 'a') 
         fh.write(str(r) + "," + str(total_reward) + "," + str(catch_count) + "\n" ) 
         fh.close()

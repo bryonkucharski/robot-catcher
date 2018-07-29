@@ -85,6 +85,7 @@ agent = DQNAgent(#state_size =num_grid_y*num_grid_x,
 
 agent.load("models/10000_goalie_network_5x3.h5")
 
+
 robot = virtual_robot(
                     WIDTH = 1680,#width of monitor
                     HEIGHT = 1050, #height of monitor
@@ -100,33 +101,36 @@ robot = virtual_robot(
 
 #VISION constants
 cap = cv2.VideoCapture(1)
-scale_factor = 1.0
+scale_factor = 0.5
 first_frame = True
 grid_dim = (5, 8)
 
 robot_x = 3
 robot_y = 2
-moveHomeFlag = False
+moveHomeFlag = True
 start = 0
 
 while(True):
     end = time.time()
-    thrust = readFromPhotogate()
-    ball_x = v.get_cell_2(cap,scale_factor,first_frame,grid_dim, draw_frame=True)
 
+    thrust = readFromPhotogate()
+
+    ball_x = v.get_cell_2(cap,scale_factor,first_frame,grid_dim, draw_frame=True)
+ 
+    #print(robot_x,robot_y,ball_x)
     if moveHomeFlag and (end-start) > 2:
         print("Homing")
-        robot.goToPosition(3,2)
+        #robot.goToPosition(3,2)
         robot_x = 3
         robot_y = 2
-        robot.drawRobot()
+        #robot.drawRobot()
         moveHomeFlag = False
         continue
     
 
     #IF PHOTOGATE IS DETECTED, PREDICT ALL
-    if thrust != -1 and len(ball_x) > 0:
-
+    if moveHomeFlag == False and thrust != -1 and len(ball_x) > 0:
+        print(thrust)
         #KEEP MAKING PREDICITONS FOR ONE SECOND???
         state = [robot_x,ball_x[0],robot_y, thrust]
         print(state)
@@ -143,13 +147,13 @@ while(True):
         print("HARDCODED ROBOT STATE POSITION: " + str(ball_x[0])  + "," + str(thrust))
         print("PREDICTION FOR STATE: "+ str(action) )
     
-        robot.update_position(action)
+        #robot.update_position(action)
         robot_x, robot_y = update_current_position(action,robot_x,robot_y)
         print("NEW ROBOT STATE: " + str(robot_x) + ", " + str(robot_y))
  
         move_robot(robot_x,robot_y)
         start = time.time()
-        robot.drawRobot()
+        #robot.drawRobot()
         moveHomeFlag = True
 
         #robot.drawRobot()
@@ -157,8 +161,12 @@ while(True):
     #IF JUST X IS DETECTED, TAKE PREDICTION WITH THRUST = 1 (will favor middle position)
     
     if(len(ball_x) > 0):
+        print("updating x")
         state = [robot_x,ball_x[0],robot_y, 2]
+        time3 = time.time()
         action = agent.predict(np.array([state]))
+        end3 = time.time()
+     
         if action == 3:
             action = 4
         elif action == 4:
@@ -168,8 +176,8 @@ while(True):
         #print("PREDICTION FOR STATE: " + str(robot_x) + ", " + str(ball_x[0]) + ", " + str(robot_y) +", " + str(1) + " ACTION: " + str(action) )
         #print("NEW STATE: " + str(robot_x) + ", " + str(robot_y))
         #this will work in mixed robot but not real robot (since we need to wait for the robot to move, cant move every iteration)
-        robot.update_position(action)
-        robot.drawRobot()
+        #robot.update_position(action)
+        #robot.drawRobot()
     
      
     

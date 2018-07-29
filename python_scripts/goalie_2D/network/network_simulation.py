@@ -8,6 +8,7 @@ from matplotlib import style
 import json
 import random
 import tensorflow as tf
+import sys
 
 
 flder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../../rl")))
@@ -33,10 +34,14 @@ BATCH = 32
 plot_file_name = '2000_network_simulation_5x3.txt'
 averages_plot_file_name = '2000_network_simulation_averages.txt'
 
-num_x = 5
-num_y = 3
-num_states = num_x*num_y
-num_actions = 5
+if(len(sys.argv) != 5):
+    sys.exit("ERROR: Must input 4 arguments. \n network_simulation.py num_x num_y simulations iter_per_roll")
+
+
+num_x = int(sys.argv[1])
+num_y = int(sys.argv[2])
+SIMULATIONS =  int(sys.argv[3])
+iter_per_roll = int(sys.argv[4])
 
 agent = DQNAgent(#state_size =num_grid_y*num_grid_x,
                 state_size = 4, #robot_x,ball_x,robot_y,thrust
@@ -97,30 +102,65 @@ def update_current_position(action,x,y):
     return new_x, new_y
 
 total_reward = 0
+total_rewards = []
+num_epochs = []
+last_reward = 0
+average_rewards = []
+average_epochs = []
+
+print("Running Simulation for size " + str(num_x) + " x " + str(num_y) + " with " + str(iter_per_roll) + " iterations per spawn for  " + str(SIMULATIONS) + " simulations")
 
 for r in range(SIMULATIONS+1):
    
 
     i = 0
-    while i < 32:
-        
-        ball_x = random.randint(1,num_x)
-        thrust = random.randint(1,num_y)
-        robot_x = random.randint(1,num_x)
-        robot_y = random.randint(1,num_y)
+    robot_y = random.randint(1,num_y)
+    robot_x = random.randint(1,num_x)
+    ball_x = random.randint(1,num_x)
+    thrust = random.randint(1,num_y)
+    state = [robot_x,ball_x,robot_y,thrust]
+    while i < iter_per_roll:
 
-        state = [robot_x,ball_x,robot_y,thrust]
         action = agent.take_action(np.array([state]))
         state_prime, reward, done = step(action, state )
         total_reward += reward
-        print(state,state_prime,action,reward)
+        #print(state,state_prime,action,reward)
         agent.remember(np.array([state]), action, reward, np.array([state_prime]), done)
+        state = state_prime
         i += 1
+    
+    if r % 10 == 0:
+        total_rewards.append(total_reward)
+        num_epochs.append(r)
+
+    if r % 100 == 0:
         
+        rewards = total_reward - last_reward
+        average_reward = rewards / 100.0
+
+        print("Total reward this 100: " + str(rewards) + " Average: " + str(average_reward))
+        average_rewards.append(average_reward)
+        average_epochs.append(r)
+
+        last_reward = total_reward
+       
     
     history = agent.replay(BATCH)
     print("epoch: " + str(r) + " history: " +  str(history.history['loss']) + " reward_count: " + str(total_reward))
-    #total_loss.append(history.history['loss'])   
+
+plt.figure(1)
+plt.plot(num_epochs,total_rewards)
+plt.title("Network: Cumulative Reward in 3D Simulation: " )
+plt.ylabel("Cumulative Reward")
+plt.xlabel("Number of Ball Rolls")
+plt.show()
+
+plt.figure(1)
+plt.plot(average_epochs,average_rewards)
+plt.title("Network: Average Reward in 3D Simulation: ")
+plt.ylabel("Average Reward")
+plt.xlabel("Number of Ball Rolls")
+plt.show()
 
 
    
