@@ -16,7 +16,7 @@ def get_cell_2(cap, scale_factor, first_frame, grid_dim, draw_frame = False):
 	img1 = cv2.resize(img1, (0,0), fx=scale_factor, fy=scale_factor)
 	
 	# Hard coded crop - should figure out better method
-	img1 = img1[:, int(round(206*scale_factor)):int(round(380*scale_factor))]
+	img1 = img1[:, int(round(192*scale_factor)):int(round(383*scale_factor))]
 	#img1 = img1[:,206:380]
 	#img1 = img1[y0:y1, x0:x1] 
 

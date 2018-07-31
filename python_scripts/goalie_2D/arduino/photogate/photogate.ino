@@ -45,7 +45,7 @@ void loop()
       Serial.write(thrust);
       //Serial.println(thrust,10);
     }
-    //printTime(startTime, stopTime);
+   // printTime(startTime, stopTime);
   }
 }
 

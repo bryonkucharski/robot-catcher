@@ -79,6 +79,10 @@
 #define HOMING_Y  1
 #define HOMED     2
 #define READY     3
+#define MAX_ACCEL 25000
+#define MAX_SPEED 10000
+
+
 AccelStepper stepperRight(1, 9, 8); // Defaults to AccelStepper::FULL4WIRE (4 pins) on 2, 3, 4, 5
 AccelStepper stepperLeft(1, 11, 10); //Second stepper motor, pin 1 for default
 String msgFromPython = "";
@@ -111,11 +115,11 @@ void setup()
    stepperRight.setCurrentPosition(0);
    stepperLeft.setCurrentPosition(0);
    
-   stepperRight.setMaxSpeed(2000);
-   stepperLeft.setMaxSpeed(2000);
+   stepperRight.setMaxSpeed(MAX_SPEED);
+   stepperLeft.setMaxSpeed(MAX_SPEED);
    
-   stepperRight.setAcceleration(10000);
-   stepperLeft.setAcceleration(10000);
+   stepperRight.setAcceleration(MAX_ACCEL);
+   stepperLeft.setAcceleration(MAX_ACCEL);
    
    //limit switches
    pinMode(A0, INPUT);
@@ -209,8 +213,8 @@ void checkLowerLeftLimitSwitch()
     stepperRight.setCurrentPosition(0);
     stepperLeft.setCurrentPosition(0);
     
-    stepperRight.setMaxSpeed(2000);
-    stepperLeft.setMaxSpeed(2000);
+    stepperRight.setMaxSpeed(MAX_SPEED);
+    stepperLeft.setMaxSpeed(MAX_SPEED);
     
     stepperRight.moveTo(10);
     stepperLeft.moveTo(-10);
@@ -223,8 +227,8 @@ void checkLowerLeftLimitSwitch()
       {
         stepperRight.setCurrentPosition(0);
         stepperLeft.setCurrentPosition(0);
-        stepperRight.setMaxSpeed(2000);
-        stepperLeft.setMaxSpeed(2000);
+        stepperRight.setMaxSpeed(MAX_SPEED);
+        stepperLeft.setMaxSpeed(MAX_SPEED);
         gridStepPosition = 0;
         gridStepPositionY = 0;
         break;
@@ -242,8 +246,8 @@ void checkMiddleLeftLimitSwitch()
     stepperRight.setCurrentPosition(0);
     stepperLeft.setCurrentPosition(0);
     
-    stepperRight.setMaxSpeed(2000);
-    stepperLeft.setMaxSpeed(2000);
+    stepperRight.setMaxSpeed(MAX_SPEED);
+    stepperLeft.setMaxSpeed(MAX_SPEED);
     
     stepperRight.moveTo(-10);
     stepperLeft.moveTo(-10);
@@ -257,8 +261,8 @@ void checkMiddleLeftLimitSwitch()
         stepperRight.setCurrentPosition(0);
         stepperLeft.setCurrentPosition(0);
         
-        stepperRight.setMaxSpeed(2000);
-        stepperLeft.setMaxSpeed(2000);
+        stepperRight.setMaxSpeed(MAX_SPEED);
+        stepperLeft.setMaxSpeed(MAX_SPEED);
         gridStepPosition = 0;
         gridStepPositionY = 0;
         break;
@@ -274,8 +278,8 @@ void checkTopRightLimitSwitch()
     stepperRight.move(STOP);
     stepperLeft.move(STOP);
     
-    stepperRight.setMaxSpeed(2000);
-    stepperLeft.setMaxSpeed(2000);
+    stepperRight.setMaxSpeed(MAX_SPEED);
+    stepperLeft.setMaxSpeed(MAX_SPEED);
     
     stepperRight.move(-10);
     stepperLeft.move(10);
@@ -298,8 +302,8 @@ void checkMiddleRightLimitSwitch()
     stepperRight.move(STOP);
     stepperLeft.move(STOP);
     
-    stepperRight.setMaxSpeed(2000);
-    stepperLeft.setMaxSpeed(2000);
+    stepperRight.setMaxSpeed(MAX_SPEED);
+    stepperLeft.setMaxSpeed(MAX_SPEED);
     
     stepperRight.move(10);
     stepperLeft.move(10);
@@ -385,8 +389,8 @@ void moveY()
         stepperRight.setCurrentPosition(stepperRightPosition);
         stepperLeft.setCurrentPosition(stepperLeftPosition);
         
-        stepperRight.setMaxSpeed(2000);
-        stepperLeft.setMaxSpeed(2000);
+        stepperRight.setMaxSpeed(MAX_SPEED);
+        stepperLeft.setMaxSpeed(MAX_SPEED);
         
         axisFlag = 1;
         break;
@@ -416,8 +420,8 @@ void moveY()
         stepperRight.setCurrentPosition(stepperRightPosition);
         stepperLeft.setCurrentPosition(stepperLeftPosition);
         
-        stepperRight.setMaxSpeed(2000);
-        stepperLeft.setMaxSpeed(2000);
+        stepperRight.setMaxSpeed(MAX_SPEED);
+        stepperLeft.setMaxSpeed(MAX_SPEED);
         
         axisFlag = X;
         break;
@@ -435,8 +439,8 @@ void moveY()
     stepperRight.setCurrentPosition(stepperRightPosition);
     stepperLeft.setCurrentPosition(stepperLeftPosition);
     
-    stepperRight.setMaxSpeed(2000);
-    stepperLeft.setMaxSpeed(2000);
+    stepperRight.setMaxSpeed(MAX_SPEED);
+    stepperLeft.setMaxSpeed(MAX_SPEED);
     
     axisFlag = X;
   }
@@ -489,8 +493,8 @@ void moveY2()
     stepperRight.setCurrentPosition(stepperRightPosition);
     stepperLeft.setCurrentPosition(stepperLeftPosition);
     
-    stepperRight.setMaxSpeed(2000);
-    stepperLeft.setMaxSpeed(2000);
+    stepperRight.setMaxSpeed(MAX_SPEED);
+    stepperLeft.setMaxSpeed(MAX_SPEED);
     
     axisFlag = X;
   }

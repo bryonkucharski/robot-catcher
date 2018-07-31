@@ -44,7 +44,7 @@ from unityUtils import UnityInterface
 
 
 t = 0
-EPOCHS = 10000
+EPOCHS = 2000
 OBSERVE = 32#320
 REPLAY_MEMORY = 50000
 BATCH = 32
@@ -52,8 +52,8 @@ LEARNING_RATE = 1e-4
 
 TYPE = "2D" # "x" for 1D robot in x direction. "y" for 1D robot in y direction. "2D" for 2D robot
 
-plot_file_name = 'plot_q_table_Unity_' + str(TYPE) + '_robot.txt'
-averages_plot_file_name = 'plot_q_table_Unity_' + str(TYPE) + '_robot_averages.txt'
+plot_file_name =          'poster_data_2000_q_table_5x3_' + str(TYPE) + '_robot.txt'
+averages_plot_file_name = 'poster_data_2000_q_table_5X3_' + str(TYPE) + '_robot_averages.txt'
 save_model = True
 load_model = False
 update_model = True
@@ -113,8 +113,8 @@ open(averages_plot_file_name, 'w').close() #resets the text file
 for r in range(EPOCHS + 1):
     ### Main Loop ###
     done = False
+    state = unity.get_state_unity(type = TYPE)
     while not done:
-        state = unity.get_state_unity(type = TYPE)
         
         action = agent.get_action(str(state))
         unity.send_action(action, TYPE)
@@ -145,12 +145,12 @@ for r in range(EPOCHS + 1):
         fh.write(str(r) + "," + str(total_reward) + "," + str(catch_count) + "\n" ) 
         fh.close()
 
-    if r % 50 == 0:
+    if r % 100 == 0:
         
         catches = catch_count - last_catch
         rewards = total_reward - last_reward
-        average_catch = catches / 50.0
-        average_reward = rewards / 50.0
+        average_catch = catches / 100.0
+        average_reward = rewards / 100.0
 
         print(" Total catches this 50: " + str(catches) + " Average: " + str(average_catch) + " Total reward this 50: " + str(rewards) + " Average: " + str(average_reward))
         average_catches.append(average_catch)
