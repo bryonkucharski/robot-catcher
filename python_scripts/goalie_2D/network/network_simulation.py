@@ -76,6 +76,8 @@ def distance_reward(x1, x2, y1, y2):
 
     distance = -0.1 * (np.sqrt((x2-x1)**2 + (y2-y1)**2) ** 2 )
     if distance == 0:
+        return 2
+    elif (x1 == x2) or (y1 == y2):
         return 1
     else:
         return distance
