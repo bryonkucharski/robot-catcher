@@ -41,16 +41,16 @@ num_y = int(sys.argv[2])
 SIMULATIONS =  int(sys.argv[3])
 
 if num_x > BATCH:
-    iter_per_roll = num_x
+    iter_per_roll = 2*num_x
 else:
-    iter_per_roll = BATCH
+    iter_per_roll = 2*BATCH
 
 plot_file_name = str(num_x) + "x" + str(num_y) + "x" + str(SIMULATIONS) + '_qtable_simulation.txt'
 averages_plot_file_name = str(num_x) + "x" + str(num_y) + "x" + str(SIMULATIONS) + '_qtable_simulation_averages.txt'
 
 EPSILON =       1    # greedy police
 ALPHA =         0.5     # learning rate
-GAMMA =         1       # discount 
+GAMMA =         0      # discount 
 
 agent = rl_agent(
                 list(range(5)), #STAY,LEFT,RIGHT, UP, DOWN
@@ -62,22 +62,37 @@ agent = rl_agent(
 agent.init_q_table()
 
 random.seed(10)
-
 def step(action, state):
     
     x_ , y_ = update_current_position(action, state[0], state[2])
-    reward = distance_reward(x_,state[1],y_,state[3])
+    
     state_prime = [x_,state[1],y_,state[3]]
-
+    #reward = distance_reward(x_,state[1],y_,state[3])
+    reward = calc_reward(state,state_prime)
     return state_prime,reward
 
-def distance_reward(x1, x2, y1, y2):
+def calc_reward(state, state_prime):
+    prev_distance = distance_formula(state[0],state[1],state[2], state[3])
+    new_distance = distance_formula(state_prime[0],state_prime[1],state_prime[2], state_prime[3])
+    print(prev_distance,new_distance)
+    if new_distance == 0:
+        return 10
+    elif new_distance > prev_distance:
+        return 1
+    else:
+        return -1
 
-    distance = -0.1 * (np.sqrt((x2-x1)**2 + (y2-y1)**2) ** 2 )
+def distance_formula(x1, x2, y1, y2):
+
+    return -0.1 * (np.sqrt((x2-x1)**2 + (y2-y1)**2) ** 2 )
+    '''
     if distance == 0:
+        return 2
+    elif (x1 == x2) or (y1 == y2):
         return 1
     else:
         return distance
+    '''
 
 
 def manhanttan_reward():
@@ -143,12 +158,12 @@ for r in range(SIMULATIONS+1):
         else:
             done = False
 
-        if done and reward == 1:
+        if done and reward == 10:
             catch_count += 1
             print("CATCH")
             
         total_reward += reward
-        #print(state,state_prime,action,reward)
+        print(state,state_prime,action,reward)
         agent.update(str(state),action,reward,str(state_prime))
         state = state_prime
         i += 1
